@@ -33,8 +33,8 @@ const mainNavGroups: NavGroup[] = [
         title: 'Manage Catering',
         navItems: [
             {
-                title: 'Catering Packages',
-                href: '',
+                title: 'Catering',
+                href: '/catering/packages',
                 icon: Package2,
             },
             {
@@ -98,7 +98,7 @@ const mainNavGroups: NavGroup[] = [
             <SidebarMenu>
                 <SidebarMenuItem>
                     <SidebarMenuButton size="lg" as-child>
-                        <Link :href="route('dashboard')">
+                        <Link :href="route('show.dashboard.page')">
                         <AppLogo />
                         </Link>
                     </SidebarMenuButton>
