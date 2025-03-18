@@ -5,6 +5,9 @@ import { Separator } from '@/components/ui/separator';
 import { type NavItem } from '@/types';
 import { Link, usePage } from '@inertiajs/vue3';
 
+const page = usePage();
+const currentPath = page.props.ziggy?.location ? new URL(page.props.ziggy.location).pathname : '';
+
 const sidebarNavItems: NavItem[] = [
     {
         title: 'Packages',
@@ -20,9 +23,6 @@ const sidebarNavItems: NavItem[] = [
     },
 ];
 
-const page = usePage();
-
-const currentPath = page.props.ziggy?.location ? new URL(page.props.ziggy.location).pathname : '';
 </script>
 
 <template>
