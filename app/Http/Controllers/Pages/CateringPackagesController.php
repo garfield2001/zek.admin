@@ -10,6 +10,7 @@ class CateringPackagesController extends Controller
 {
     public function index()
     {
-        return Inertia::render('CateringPackages');
+        /* return Inertia::render('CateringPackages'); */
+        return Inertia::render('CateringPackagesTest');
     }
 }
