@@ -33,20 +33,10 @@ const mainNavGroups: NavGroup[] = [
         title: 'Manage Catering',
         navItems: [
             {
-                title: 'Catering',
-                href: '/catering/packages',
-                icon: Package2,
-            },
-            {
-                title: 'Meal Categories',
-                href: '',
-                icon: ChartBarStacked,
-            },
-            {
-                title: 'Dishes',
-                href: '/dishes',
+                title: 'Manage Catering',
+                href: '/catering',
                 icon: Soup,
-            },
+            }
         ],
     },
     {
@@ -64,8 +54,6 @@ const mainNavGroups: NavGroup[] = [
             },
         ],
     },
-
-
 ];
 
 
