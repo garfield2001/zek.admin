@@ -12,22 +12,26 @@ class Package extends Model
 
     protected $fillable = [
         'name',
-        'description',
         'price',
         'meal_limit',
+        'minimum_guests',
+        'maximum_guests',
         'status',
     ];
 
     protected $casts = [
         'price' => 'decimal:2',
         'meal_limit' => 'integer',
+        'minimum_guests' => 'integer',
+        'maximum_guests' => 'integer',
+        'status' => 'string',
     ];
 
     /**
-     * Get the inclusions for the package.
+     * The inclusions that belong to this package.
      */
     public function inclusions()
     {
-        return $this->hasMany(PackageInclusion::class);
+        return $this->belongsToMany(Inclusion::class);
     }
 }

@@ -2,17 +2,17 @@
 
 namespace Database\Seeders;
 
-use App\Models\MealType;
+use App\Models\MenuType;
 use Illuminate\Database\Seeder;
 
-class MealTypeSeeder extends Seeder
+class MenuTypeSeeder extends Seeder
 {
     /**
      * Run the database seeds.
      */
     public function run(): void
     {
-        $mealTypes = [
+        $menuTypes = [
             [
                 'name' => 'Beef',
                 'description' => 'Premium beef dishes expertly prepared with rich flavors and tender textures',
@@ -47,8 +47,8 @@ class MealTypeSeeder extends Seeder
             ],
         ];
 
-        foreach ($mealTypes as $mealType) {
-            MealType::create($mealType);
+        foreach ($menuTypes as $menuType) {
+            MenuType::create($menuType);
         }
     }
 }

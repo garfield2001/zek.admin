@@ -2,8 +2,8 @@
 import AppLayout from '@/layouts/AppLayout.vue';
 import { type BreadcrumbItem } from '@/types';
 import { Head } from '@inertiajs/vue3';
-import { Card, CardContent } from '@/components/ui/card';
-import { Utensils, UtensilsCrossed, Plus, X, Edit2, Save, PlusCircle, Trash2 } from 'lucide-vue-next';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Utensils, UtensilsCrossed, Plus, X, Edit2, Save, PlusCircle, Trash2, Settings, BarChart, Users, Filter, ShoppingCart, Calendar, CalendarDays, DollarSign, Package, TrendingUp, CheckCircle, Sun, Heart, ChevronRight, LineChart, Clock, Sliders, History } from 'lucide-vue-next';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ref, reactive, computed } from 'vue';
@@ -16,7 +16,23 @@ import {
     DialogTitle,
     DialogTrigger,
 } from '@/components/ui/dialog';
-import { Link } from '@inertiajs/vue3';
+import {
+    Tabs,
+    TabsContent,
+    TabsList,
+    TabsTrigger,
+} from '@/components/ui/tabs';
+import { Link, router } from '@inertiajs/vue3';
+import { Badge } from '@/components/ui/badge';
+import { Switch } from '@/components/ui/switch';
+
+interface Props {
+    initialPackages: Package[];
+    initialMealCategories: MenuCategory[];
+    initialMinimumPersons: number;
+}
+
+const props = defineProps<Props>();
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -32,12 +48,13 @@ interface Package {
     includes: string[];
 }
 
-interface MealCategory {
+interface MenuCategory {
+    id: string;
     title: string;
     items: string[];
 }
 
-const minimumPersons = ref(50);
+const minimumPersons = ref(props.initialMinimumPersons);
 const isEditingMinimum = ref(false);
 
 const defaultPackage = {
@@ -47,32 +64,8 @@ const defaultPackage = {
     includes: ['Rice & Drinks']
 };
 
-const packages = ref<Package[]>([
-    {
-        name: 'PACKAGE A',
-        price: 280,
-        meals: 5,
-        includes: ['Rice & Drinks']
-    },
-    {
-        name: 'PACKAGE B',
-        price: 310,
-        meals: 6,
-        includes: ['Rice & Drinks']
-    },
-    {
-        name: 'PACKAGE C',
-        price: 350,
-        meals: 7,
-        includes: ['Rice & Drinks']
-    },
-    {
-        name: 'PACKAGE D',
-        price: 380,
-        meals: 8,
-        includes: ['Rice & Drinks']
-    }
-]);
+const packages = ref<Package[]>(props.initialPackages);
+const menuCategories = reactive<MenuCategory[]>(props.initialMealCategories);
 
 const editingStates = ref(packages.value.map(() => ({
     isEditing: false,
@@ -90,95 +83,6 @@ const getEditingState = (index: number) => {
     });
 };
 
-const mealCategories = reactive<MealCategory[]>([
-    {
-        title: 'Beef',
-        items: [
-            'BEEF STEAK TAGALOG',
-            'BEEF MENUDO',
-            'BEEF WITH BROCCOLI',
-            'BEEF CALDERETA',
-            'SIZZLING BEEF BULALO IN CREAM SAUCE',
-            'BEEF WITH MUSHROOM',
-            'LENGUA ESTOFADO'
-        ]
-    },
-    {
-        title: 'Pork',
-        items: [
-            'PORK MENUDO',
-            'SPICY PORK RIBS',
-            'PORK BINAGOONGAN',
-            'SWEET AND SOUR PORK',
-            'LUMPIA SHANGHAI',
-            'PORK STEAK'
-        ]
-    },
-    {
-        title: 'Chicken',
-        items: [
-            'CHICKEN AFRITADA',
-            'BUTTERED CHICKEN',
-            'GARLIC CHICKEN',
-            'FRIED CHICKEN',
-            'CHICKEN CURRY',
-            'CHICKEN TERIYAKI',
-            'CHICKEN BUFFALO',
-            'CHICKEN CORDON BLEU',
-            'CHICKEN ALA KING'
-        ]
-    },
-    {
-        title: 'Fish & Seafoods',
-        items: [
-            'MIXED SEAFOODS',
-            'BUTTERED GARLIC SHRIMP',
-            'SWEET AND SOUR FISH',
-            'FISH FILLET WITH TAOSI SAUCE',
-            'BREADED FISH FILLET WITH TARTAR SAUCE'
-        ]
-    },
-    {
-        title: 'Vegetables',
-        items: [
-            'CHOPSUEY WITH QUAIL EGG',
-            'VEGETABLE WITH SEAFOODS',
-            'BUTTERED MIX VEGETABLES',
-            'PINAKBET',
-            'STIR FRY VEGETABLE'
-        ]
-    },
-    {
-        title: 'Noodles',
-        items: [
-            'SOTANGHON GUISADO',
-            'PANCIT CANTON',
-            'BAM-E'
-        ]
-    },
-    {
-        title: 'Dessert',
-        items: [
-            'FRESH MIX FRUITS',
-            'MANGO SAGO',
-            'BUKO SALAD',
-            'BUKO PANDAN',
-            'MACARONI SALAD'
-        ]
-    },
-    {
-        title: 'Pasta',
-        items: [
-            'SPAGHETTI WITH BECHAMEL SAUCE',
-            'SEAFOOD MARINARA',
-            'CREAMY CARBONARA',
-            'BAKED MACARONI',
-            'BAKED LASAGNA',
-            'BAKED SPAGHETTI'
-        ]
-    }
-]);
-
 const newPackage = reactive<Package>({ ...defaultPackage });
 const newInclusion = ref('');
 const packageToDelete = ref<number | null>(null);
@@ -191,7 +95,18 @@ const startEditing = (index: number) => {
 
 const savePackage = (index: number) => {
     if (editingStates.value[index]) {
-        editingStates.value[index].isEditing = false;
+        const pkg = packages.value[index];
+        router.put(`/catering/packages/${index + 1}`, {
+            name: pkg.name,
+            price: pkg.price,
+            meals: pkg.meals,
+            includes: pkg.includes
+        }, {
+            preserveScroll: true,
+            onSuccess: () => {
+                editingStates.value[index].isEditing = false;
+            }
+        });
     }
 };
 
@@ -212,13 +127,19 @@ const removeInclusion = (packageIndex: number, inclusionIndex: number) => {
 };
 
 const saveMinimumPersons = () => {
-    isEditingMinimum.value = false;
-    // Here you would typically make an API call to save the changes
+    router.put('/catering/settings/minimum-guests', {
+        value: minimumPersons.value
+    }, {
+        preserveScroll: true,
+        onSuccess: () => {
+            isEditingMinimum.value = false;
+        }
+    });
 };
 
 // Dialog States
 const showAddDialog = ref(false);
-const showAddDishDialog = ref(false);
+const showAddMenuDialog = ref(false);
 const showDeleteDialog = ref(false);
 
 const addNewInclusion = () => {
@@ -265,77 +186,98 @@ const confirmDelete = (index: number) => {
 };
 
 const deletePackage = () => {
-    if (packageToDelete.value !== null) {
-        packages.value.splice(packageToDelete.value, 1);
-        editingStates.value.splice(packageToDelete.value, 1);
-        showDeleteDialog.value = false;
-        packageToDelete.value = null;
+    const index = packageToDelete.value;
+    if (index !== null) {
+        router.delete(`/catering/packages/${index + 1}`, {
+            preserveScroll: true,
+            onSuccess: () => {
+                packages.value.splice(index, 1);
+                editingStates.value.splice(index, 1);
+                showDeleteDialog.value = false;
+                packageToDelete.value = null;
+            }
+        });
     }
 };
 
-// Dish Management
+// Menu Management
 const selectedCategory = ref('');
-const newDish = ref('');
-const dishToDelete = ref<{ category: string; dish: string } | null>(null);
-const dishToEdit = ref<{ category: string; dish: string } | null>(null);
-const editingDish = ref('');
+const newMenuItem = ref('');
 const newCategory = ref('');
+const menuType = ref<'category' | 'menu'>('menu');
 
-const resetNewDish = () => {
+const resetMenuForm = () => {
     selectedCategory.value = '';
-    newDish.value = '';
+    newMenuItem.value = '';
     newCategory.value = '';
+    menuType.value = 'menu';
 };
 
-const cancelAddDish = () => {
-    showAddDishDialog.value = false;
-    resetNewDish();
+const cancelAddMenu = () => {
+    showAddMenuDialog.value = false;
+    resetMenuForm();
 };
 
-const addNewDish = () => {
-    if (selectedCategory.value && newDish.value.trim()) {
-        const category = mealCategories.find(cat => cat.title === selectedCategory.value);
-        if (category && !category.items.includes(newDish.value.trim().toUpperCase())) {
-            category.items.push(newDish.value.trim().toUpperCase());
-            showAddDishDialog.value = false;
-            resetNewDish();
+const addNewMenu = () => {
+    if (menuType.value === 'category' && newCategory.value.trim()) {
+        const categoryName = newCategory.value.trim().toUpperCase();
+        if (!menuCategories.some(cat => cat.title === categoryName)) {
+            menuCategories.push({
+                id: categoryName,
+                title: categoryName,
+                items: []
+            });
+            resetMenuForm();
+            showAddMenuDialog.value = false;
+        }
+    } else if (menuType.value === 'menu' && selectedCategory.value && newMenuItem.value.trim()) {
+        const category = menuCategories.find(cat => cat.title === selectedCategory.value);
+        if (category && !category.items.includes(newMenuItem.value.trim().toUpperCase())) {
+            category.items.push(newMenuItem.value.trim().toUpperCase());
+            resetMenuForm();
+            showAddMenuDialog.value = false;
         }
     }
 };
 
-const startEditingDish = (categoryTitle: string, dish: string) => {
-    dishToEdit.value = { category: categoryTitle, dish };
-    editingDish.value = dish;
+// Menu Item Management
+const menuItemToDelete = ref<{ category: string; item: string } | null>(null);
+const menuItemToEdit = ref<{ category: string; item: string } | null>(null);
+const editingMenuItem = ref('');
+
+const startEditingMenuItem = (categoryTitle: string, item: string) => {
+    menuItemToEdit.value = { category: categoryTitle, item };
+    editingMenuItem.value = item;
 };
 
-const saveDish = () => {
-    if (dishToEdit.value && editingDish.value.trim()) {
-        const category = mealCategories.find(cat => cat.title === dishToEdit.value?.category);
+const saveMenuItem = () => {
+    if (menuItemToEdit.value && editingMenuItem.value.trim()) {
+        const category = menuCategories.find(cat => cat.title === menuItemToEdit.value?.category);
         if (category) {
-            const index = category.items.indexOf(dishToEdit.value.dish);
+            const index = category.items.indexOf(menuItemToEdit.value.item);
             if (index !== -1) {
-                category.items[index] = editingDish.value.trim().toUpperCase();
-                dishToEdit.value = null;
-                editingDish.value = '';
+                category.items[index] = editingMenuItem.value.trim().toUpperCase();
+                menuItemToEdit.value = null;
+                editingMenuItem.value = '';
             }
         }
     }
 };
 
-const confirmDeleteDish = (categoryTitle: string, dish: string) => {
-    dishToDelete.value = { category: categoryTitle, dish };
+const confirmDeleteMenuItem = (categoryTitle: string, item: string) => {
+    menuItemToDelete.value = { category: categoryTitle, item };
     showDeleteDialog.value = true;
 };
 
-const deleteDish = () => {
-    if (dishToDelete.value) {
-        const category = mealCategories.find(cat => cat.title === dishToDelete.value?.category);
+const deleteMenuItem = () => {
+    if (menuItemToDelete.value) {
+        const category = menuCategories.find(cat => cat.title === menuItemToDelete.value?.category);
         if (category) {
-            const index = category.items.indexOf(dishToDelete.value.dish);
+            const index = category.items.indexOf(menuItemToDelete.value.item);
             if (index !== -1) {
                 category.items.splice(index, 1);
                 showDeleteDialog.value = false;
-                dishToDelete.value = null;
+                menuItemToDelete.value = null;
             }
         }
     }
@@ -343,8 +285,9 @@ const deleteDish = () => {
 
 const addNewCategory = () => {
     const categoryName = newCategory.value.trim().toUpperCase();
-    if (categoryName && !mealCategories.some(cat => cat.title === categoryName)) {
-        mealCategories.push({
+    if (categoryName && !menuCategories.some(cat => cat.title === categoryName)) {
+        menuCategories.push({
+            id: categoryName,
             title: categoryName,
             items: []
         });
@@ -352,6 +295,8 @@ const addNewCategory = () => {
         newCategory.value = '';
     }
 };
+
+const seasonalDates = computed(() => ['Dec 31', 'Aug 31', 'Jun 30']);
 </script>
 
 <template>
@@ -359,318 +304,544 @@ const addNewCategory = () => {
 
         <Head title="Manage Catering" />
 
-        <div class="flex h-full flex-1 flex-col gap-12 rounded-xl px-6 py-8 max-w-7xl mx-auto bg-gray-50/50">
-            <!-- Header -->
-            <div class="text-center">
-                <h1 class="text-4xl font-bold text-gray-900 mb-2">Catering Packages </h1>
-                <p class="text-lg text-muted-foreground">Overview of packages and meal choices</p>
+        <div class="flex h-full flex-1 flex-col gap-6 p-6">
+            <!-- Header Section -->
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-3xl font-bold tracking-tight">Catering Management</h1>
+                    <p class="text-muted-foreground">Manage your catering packages and menu items</p>
+                </div>
+                <div class="flex items-center gap-3">
+                    <Button variant="outline" asChild>
+                        <Link href="/catering/settings">
+                        <Settings class="h-4 w-4 mr-2" />
+                        Settings
+                        </Link>
+                    </Button>
+                    <Button variant="outline" asChild>
+                        <Link href="/catering/reports">
+                        <BarChart class="h-4 w-4 mr-2" />
+                        Reports
+                        </Link>
+                    </Button>
+                </div>
             </div>
 
-            <!-- Packages Section -->
-            <div class="bg-white rounded-xl p-8 shadow-md border border-gray-200">
-                <div class="flex items-center justify-between gap-3 mb-6">
-                    <div class="flex items-center gap-3">
-                        <UtensilsCrossed class="h-7 w-7 text-primary" />
-                        <h2 class="text-2xl font-bold text-gray-900">Available Packages</h2>
+            <!-- Navigation Tabs -->
+            <Tabs defaultValue="overview" class="w-full">
+                <TabsList class="w-full justify-start h-10">
+                    <TabsTrigger value="overview" class="text-sm font-medium">Overview</TabsTrigger>
+                    <TabsTrigger value="menu" class="text-sm font-medium">Menu Management</TabsTrigger>
+                    <TabsTrigger value="packages" class="text-sm font-medium">Package Management</TabsTrigger>
+                </TabsList>
+
+                <!-- Overview Tab -->
+                <TabsContent value="overview" class="mt-6">
+                    <!-- Stats Grid -->
+                    <div class="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+                        <Card
+                            class="relative overflow-hidden border-none bg-gradient-to-br from-primary/10 to-primary/5">
+                            <CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
+                                <CardTitle class="text-sm font-medium text-primary">Package Performance</CardTitle>
+                                <Package class="h-4 w-4 text-primary" />
+                            </CardHeader>
+                            <CardContent>
+                                <div class="text-3xl font-bold">Wedding Package</div>
+                                <div class="flex items-center gap-1 text-sm text-muted-foreground">
+                                    <TrendingUp class="h-4 w-4 text-green-500" />
+                                    <span>45% of bookings</span>
+                                </div>
+                                <p class="mt-2 text-xs text-muted-foreground">
+                                    Most popular package
+                                </p>
+                            </CardContent>
+                        </Card>
+
+                        <Card
+                            class="relative overflow-hidden border-none bg-gradient-to-br from-green-500/10 to-green-500/5">
+                            <CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
+                                <CardTitle class="text-sm font-medium text-green-500">Average Order Value</CardTitle>
+                                <DollarSign class="h-4 w-4 text-green-500" />
+                            </CardHeader>
+                            <CardContent>
+                                <div class="text-3xl font-bold">₱{{(packages.reduce((acc, pkg) => acc + pkg.price, 0) /
+                                    packages.length).toFixed(2)}}</div>
+                                <div class="flex items-center gap-1 text-sm text-muted-foreground">
+                                    <TrendingUp class="h-4 w-4 text-green-500" />
+                                    <span>Per package</span>
+                                </div>
+                                <p class="mt-2 text-xs text-muted-foreground">
+                                    Current average
+                                </p>
+                            </CardContent>
+                        </Card>
+
+                        <Card
+                            class="relative overflow-hidden border-none bg-gradient-to-br from-blue-500/10 to-blue-500/5">
+                            <CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
+                                <CardTitle class="text-sm font-medium text-blue-500">Price Range</CardTitle>
+                                <DollarSign class="h-4 w-4 text-blue-500" />
+                            </CardHeader>
+                            <CardContent>
+                                <div class="text-3xl font-bold">₱{{Math.min(...packages.map(pkg =>
+                                    pkg.price)).toLocaleString()}} - ₱{{Math.max(...packages.map(pkg =>
+                                        pkg.price)).toLocaleString()}}</div>
+                                <div class="flex items-center gap-1 text-sm text-muted-foreground">
+                                    <TrendingUp class="h-4 w-4 text-green-500" />
+                                    <span>Across all packages</span>
+                                </div>
+                                <p class="mt-2 text-xs text-muted-foreground">
+                                    Min - Max range
+                                </p>
+                            </CardContent>
+                        </Card>
+
+                        <Card
+                            class="relative overflow-hidden border-none bg-gradient-to-br from-purple-500/10 to-purple-500/5">
+                            <CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
+                                <CardTitle class="text-sm font-medium text-purple-500">Meal Distribution</CardTitle>
+                                <Utensils class="h-4 w-4 text-purple-500" />
+                            </CardHeader>
+                            <CardContent>
+                                <div class="text-3xl font-bold">{{Math.min(...packages.map(pkg => pkg.meals))}} -
+                                    {{Math.max(...packages.map(pkg => pkg.meals))}}</div>
+                                <div class="flex items-center gap-1 text-sm text-muted-foreground">
+                                    <TrendingUp class="h-4 w-4 text-green-500" />
+                                    <span>Meals per package</span>
+                                </div>
+                                <p class="mt-2 text-xs text-muted-foreground">
+                                    Available range
+                                </p>
+                            </CardContent>
+                        </Card>
                     </div>
-                    <div class="flex items-center gap-3">
-                        <Button variant="outline" @click="addNewPackage">
-                            <PlusCircle class="h-4 w-4 mr-2" />
-                            Add Package
-                        </Button>
-                        <Button variant="outline" asChild>
-                            <Link href="/catering/packages">Manage All Packages</Link>
-                        </Button>
-                    </div>
-                </div>
-                <div class="text-center mb-6 p-4 bg-primary/5 rounded-lg flex items-center justify-center gap-3">
-                    <div class="text-lg font-semibold text-primary" v-if="!isEditingMinimum">
-                        MINIMUM OF {{ minimumPersons }} PERSONS
-                        <Button variant="ghost" size="icon" class="ml-2" @click="isEditingMinimum = true">
-                            <Edit2 class="h-4 w-4" />
-                        </Button>
-                    </div>
-                    <div v-else class="flex items-center gap-2">
-                        <span class="text-lg font-semibold text-primary">MINIMUM OF</span>
-                        <Input v-model="minimumPersons" type="number" class="w-24 text-center" />
-                        <span class="text-lg font-semibold text-primary">PERSONS</span>
-                        <Button variant="ghost" size="icon" @click="saveMinimumPersons">
-                            <Save class="h-4 w-4" />
-                        </Button>
-                    </div>
-                </div>
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                    <Card v-for="(pkg, index) in packages" :key="index"
-                        class="overflow-hidden transition-all duration-200 hover:shadow-lg">
-                        <div class="bg-primary/10 p-4 flex justify-between items-center">
-                            <div v-if="!getEditingState(index).value?.isEditing" class="text-lg font-bold text-primary">
-                                {{ pkg.name }}
-                            </div>
-                            <Input v-else v-model="pkg.name" class="w-full" />
-                            <div class="flex items-center gap-2">
-                                <Button variant="ghost" size="icon"
-                                    @click="getEditingState(index).value?.isEditing ? savePackage(index) : startEditing(index)">
-                                    <Edit2 v-if="!getEditingState(index).value?.isEditing" class="h-4 w-4" />
-                                    <Save v-else class="h-4 w-4" />
+
+                    <!-- Additional Management Sections -->
+                    <div class="grid gap-6 lg:grid-cols-2 mt-6">
+                        <!-- Menu Category Overview -->
+                        <Card class="col-span-1">
+                            <CardHeader class="flex flex-row items-center justify-between">
+                                <CardTitle>Menu Categories</CardTitle>
+                                <Button variant="outline" size="sm" class="gap-2">
+                                    <Filter class="h-4 w-4" />
+                                    Manage
                                 </Button>
-                                <Button variant="ghost" size="icon" class="text-destructive"
-                                    @click="confirmDelete(index)">
-                                    <Trash2 class="h-4 w-4" />
-                                </Button>
-                            </div>
-                        </div>
-                        <CardContent class="p-6">
-                            <div class="flex items-center gap-2 mb-2">
-                                <div v-if="!getEditingState(index).value?.isEditing"
-                                    class="text-3xl font-bold text-gray-900">
-                                    ₱{{ pkg.price }}
-                                </div>
-                                <Input v-else v-model="pkg.price" type="number" class="w-32"
-                                    :placeholder="String(pkg.price)" />
-                            </div>
-                            <div class="flex items-center gap-2 mb-2 text-primary">
-                                <Utensils class="h-5 w-5" />
-                                <div v-if="!getEditingState(index).value?.isEditing" class="font-semibold">
-                                    Choice of {{ pkg.meals }} Meals
-                                </div>
-                                <div v-else class="flex items-center gap-2">
-                                    <span class="font-semibold">Choice of</span>
-                                    <Input v-model="pkg.meals" type="number" class="w-20"
-                                        :placeholder="String(pkg.meals)" />
-                                    <span class="font-semibold">Meals</span>
-                                </div>
-                            </div>
-                            <div class="text-sm text-muted-foreground mb-4">
-                                Select any {{ pkg.meals }} meals from our menu
-                            </div>
-                            <div class="h-px w-full bg-gray-200 my-4"></div>
-                            <div class="font-medium text-sm mb-2">Package Includes:</div>
-                            <ul class="space-y-3">
-                                <li v-for="(item, inclusionIndex) in pkg.includes" :key="item"
-                                    class="flex items-center justify-between text-gray-600">
-                                    <div class="flex items-center">
-                                        <span class="h-1.5 w-1.5 rounded-full bg-primary mr-2"></span>
-                                        <span v-if="!getEditingState(index).value?.isEditing">{{ item }}</span>
-                                        <Input v-else v-model="pkg.includes[inclusionIndex]" class="w-full" />
+                            </CardHeader>
+                            <CardContent>
+                                <div class="space-y-4">
+                                    <div v-for="category in menuCategories" :key="category.id"
+                                        class="flex items-center justify-between rounded-lg border p-4">
+                                        <div class="space-y-1">
+                                            <div class="flex items-center gap-2">
+                                                <UtensilsCrossed class="h-4 w-4 text-primary" />
+                                                <span class="font-medium">{{ category.title }}</span>
+                                            </div>
+                                            <p class="text-sm text-muted-foreground">{{ category.items.length }} items
+                                            </p>
+                                        </div>
+                                        <Button variant="ghost" size="sm">
+                                            <Edit2 class="h-4 w-4" />
+                                        </Button>
                                     </div>
-                                    <Button v-if="getEditingState(index).value?.isEditing" variant="ghost" size="icon"
-                                        @click="removeInclusion(index, inclusionIndex)">
-                                        <X class="h-4 w-4" />
-                                    </Button>
-                                </li>
-                                <li v-if="getEditingState(index).value?.isEditing" class="flex items-center gap-2">
-                                    <Input v-model="getEditingState(index).value.newInclusion"
-                                        placeholder="Add new inclusion" @keyup.enter="addInclusion(index)" />
-                                    <Button variant="ghost" size="icon" @click="addInclusion(index)">
-                                        <Plus class="h-4 w-4" />
-                                    </Button>
-                                </li>
-                            </ul>
+                                </div>
+                            </CardContent>
+                        </Card>
+
+                        <!-- Package Inclusions Summary -->
+                        <Card class="col-span-1">
+                            <CardHeader class="flex flex-row items-center justify-between">
+                                <CardTitle>Package Inclusions</CardTitle>
+                                <Button variant="outline" size="sm" class="gap-2">
+                                    <Package class="h-4 w-4" />
+                                    Manage
+                                </Button>
+                            </CardHeader>
+                            <CardContent>
+                                <div class="space-y-4">
+                                    <div v-for="(inclusion, index) in ['Service Staff', 'Basic Setup', 'Tableware', 'Basic Decoration']"
+                                        :key="index" class="flex items-center justify-between rounded-lg border p-4">
+                                        <div class="space-y-1">
+                                            <div class="flex items-center gap-2">
+                                                <CheckCircle class="h-4 w-4 text-green-500" />
+                                                <span class="font-medium">{{ inclusion }}</span>
+                                            </div>
+                                            <p class="text-sm text-muted-foreground">Available in {{
+                                                Math.floor(Math.random() * 3) + 2 }} packages</p>
+                                        </div>
+                                        <Button variant="ghost" size="sm">
+                                            <Edit2 class="h-4 w-4" />
+                                        </Button>
+                                    </div>
+                                </div>
+                            </CardContent>
+                        </Card>
+
+                        <!-- Seasonal Packages -->
+                        <Card class="col-span-1">
+                            <CardHeader class="flex flex-row items-center justify-between">
+                                <CardTitle>Seasonal Packages</CardTitle>
+                                <Button variant="outline" size="sm" class="gap-2">
+                                    <Calendar class="h-4 w-4" />
+                                    Manage
+                                </Button>
+                            </CardHeader>
+                            <CardContent>
+                                <div class="space-y-4">
+                                    <div v-for="(season, index) in ['Holiday Special', 'Summer Package', 'Wedding Season']"
+                                        :key="index" class="flex items-center justify-between rounded-lg border p-4">
+                                        <div class="space-y-1">
+                                            <div class="flex items-center gap-2">
+                                                <Sun class="h-4 w-4 text-yellow-500" />
+                                                <span class="font-medium">{{ season }}</span>
+                                            </div>
+                                            <p class="text-sm text-muted-foreground">Active until {{
+                                                seasonalDates[index] }}</p>
+                                        </div>
+                                        <Switch />
+                                    </div>
+                                </div>
+                            </CardContent>
+                        </Card>
+
+                        <!-- Package Comparison -->
+                        <Card class="col-span-1">
+                            <CardHeader class="flex flex-row items-center justify-between">
+                                <CardTitle>Package Comparison</CardTitle>
+                                <Button variant="outline" size="sm" class="gap-2">
+                                    <BarChart class="h-4 w-4" />
+                                    Compare
+                                </Button>
+                            </CardHeader>
+                            <CardContent>
+                                <div class="space-y-4">
+                                    <div v-for="(pkg, index) in packages.slice(0, 2)" :key="index"
+                                        class="flex items-center justify-between rounded-lg border p-4">
+                                        <div class="space-y-1">
+                                            <div class="flex items-center gap-2">
+                                                <Package class="h-4 w-4 text-primary" />
+                                                <span class="font-medium">{{ pkg.name }}</span>
+                                            </div>
+                                            <p class="text-sm text-muted-foreground">₱{{ pkg.price.toLocaleString() }} -
+                                                {{ pkg.meals }} meals</p>
+                                        </div>
+                                        <Button variant="ghost" size="sm">
+                                            <BarChart class="h-4 w-4" />
+                                        </Button>
+                                    </div>
+                                </div>
+                            </CardContent>
+                        </Card>
+
+                        <!-- Customer Preferences -->
+                        <Card class="col-span-1">
+                            <CardHeader class="flex flex-row items-center justify-between">
+                                <CardTitle>Customer Preferences</CardTitle>
+                                <Button variant="outline" size="sm" class="gap-2">
+                                    <Users class="h-4 w-4" />
+                                    View All
+                                </Button>
+                            </CardHeader>
+                            <CardContent>
+                                <div class="space-y-4">
+                                    <div v-for="(pref, index) in ['Most Selected Items', 'Popular Combinations', 'Customization Trends']"
+                                        :key="index" class="flex items-center justify-between rounded-lg border p-4">
+                                        <div class="space-y-1">
+                                            <div class="flex items-center gap-2">
+                                                <Heart class="h-4 w-4 text-red-500" />
+                                                <span class="font-medium">{{ pref }}</span>
+                                            </div>
+                                            <p class="text-sm text-muted-foreground">View detailed analytics</p>
+                                        </div>
+                                        <Button variant="ghost" size="sm">
+                                            <ChevronRight class="h-4 w-4" />
+                                        </Button>
+                                    </div>
+                                </div>
+                            </CardContent>
+                        </Card>
+
+                        <!-- Package Performance Details -->
+                        <Card class="col-span-1">
+                            <CardHeader class="flex flex-row items-center justify-between">
+                                <CardTitle>Performance Details</CardTitle>
+                                <Button variant="outline" size="sm" class="gap-2">
+                                    <TrendingUp class="h-4 w-4" />
+                                    View All
+                                </Button>
+                            </CardHeader>
+                            <CardContent>
+                                <div class="space-y-4">
+                                    <div v-for="(metric, index) in ['Booking Trends', 'Revenue Analysis', 'Customer Satisfaction']"
+                                        :key="index" class="flex items-center justify-between rounded-lg border p-4">
+                                        <div class="space-y-1">
+                                            <div class="flex items-center gap-2">
+                                                <LineChart class="h-4 w-4 text-blue-500" />
+                                                <span class="font-medium">{{ metric }}</span>
+                                            </div>
+                                            <p class="text-sm text-muted-foreground">View detailed reports</p>
+                                        </div>
+                                        <Button variant="ghost" size="sm">
+                                            <ChevronRight class="h-4 w-4" />
+                                        </Button>
+                                    </div>
+                                </div>
+                            </CardContent>
+                        </Card>
+
+                        <!-- Quick Settings -->
+                        <Card class="col-span-1">
+                            <CardHeader class="flex flex-row items-center justify-between">
+                                <CardTitle>Quick Settings</CardTitle>
+                                <Button variant="outline" size="sm" class="gap-2">
+                                    <Settings class="h-4 w-4" />
+                                    All Settings
+                                </Button>
+                            </CardHeader>
+                            <CardContent>
+                                <div class="space-y-4">
+                                    <div v-for="(setting, index) in ['Minimum Order', 'Package Availability', 'Special Offers']"
+                                        :key="index" class="flex items-center justify-between rounded-lg border p-4">
+                                        <div class="space-y-1">
+                                            <div class="flex items-center gap-2">
+                                                <Sliders class="h-4 w-4 text-primary" />
+                                                <span class="font-medium">{{ setting }}</span>
+                                            </div>
+                                            <p class="text-sm text-muted-foreground">Configure settings</p>
+                                        </div>
+                                        <Button variant="ghost" size="sm">
+                                            <Edit2 class="h-4 w-4" />
+                                        </Button>
+                                    </div>
+                                </div>
+                            </CardContent>
+                        </Card>
+
+                        <!-- Recent Changes -->
+                        <Card class="col-span-1">
+                            <CardHeader class="flex flex-row items-center justify-between">
+                                <CardTitle>Recent Changes</CardTitle>
+                                <Button variant="outline" size="sm" class="gap-2">
+                                    <History class="h-4 w-4" />
+                                    View All
+                                </Button>
+                            </CardHeader>
+                            <CardContent>
+                                <div class="space-y-4">
+                                    <div v-for="(change, index) in ['Package Updated', 'New Menu Item', 'Price Adjusted']"
+                                        :key="index" class="flex items-center justify-between rounded-lg border p-4">
+                                        <div class="space-y-1">
+                                            <div class="flex items-center gap-2">
+                                                <Clock class="h-4 w-4 text-primary" />
+                                                <span class="font-medium">{{ change }}</span>
+                                            </div>
+                                            <p class="text-sm text-muted-foreground">2 hours ago</p>
+                                        </div>
+                                        <Button variant="ghost" size="sm">
+                                            <ChevronRight class="h-4 w-4" />
+                                        </Button>
+                                    </div>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    </div>
+                </TabsContent>
+
+                <!-- Menu Management Tab -->
+                <TabsContent value="menu" class="mt-6">
+                    <Card>
+                        <CardHeader class="flex flex-row items-center justify-between">
+                            <CardTitle>Menu Categories</CardTitle>
+                            <Button variant="outline" size="sm" class="gap-2" @click="showAddMenuDialog = true">
+                                <Plus class="h-4 w-4" />
+                                Add Category
+                            </Button>
+                        </CardHeader>
+                        <CardContent>
+                            <div class="space-y-4">
+                                <div v-for="category in menuCategories" :key="category.title"
+                                    class="rounded-lg border p-4 transition-colors hover:bg-muted/50">
+                                    <div class="flex items-center justify-between mb-2">
+                                        <h3 class="text-sm font-medium">{{ category.title }}</h3>
+                                        <Button variant="ghost" size="sm" @click="addNewCategory">
+                                            <PlusCircle class="h-4 w-4" />
+                                        </Button>
+                                    </div>
+                                    <div class="space-y-2">
+                                        <div v-for="(item, itemIndex) in category.items" :key="itemIndex"
+                                            class="flex items-center justify-between text-sm">
+                                            <span class="text-muted-foreground">{{ item }}</span>
+                                            <div class="flex items-center gap-1">
+                                                <Button variant="ghost" size="sm"
+                                                    @click="startEditingMenuItem(category.title, item)">
+                                                    <Edit2 class="h-3 w-3" />
+                                                </Button>
+                                                <Button variant="ghost" size="sm"
+                                                    @click="confirmDeleteMenuItem(category.title, item)">
+                                                    <Trash2 class="h-3 w-3" />
+                                                </Button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </CardContent>
                     </Card>
-                </div>
-            </div>
+                </TabsContent>
 
-            <!-- Section Divider -->
-            <div class="relative py-2">
-                <div class="absolute inset-0 flex items-center">
-                    <div class="w-full border-t border-gray-200"></div>
-                </div>
-                <div class="relative flex justify-center">
-                    <span class="bg-gray-50/50 px-6 py-1 text-sm font-medium text-gray-500">MENU CONFIGURATION</span>
-                </div>
-            </div>
-
-            <!-- Meal Choices Section -->
-            <div class="bg-white rounded-xl p-8 shadow-md border border-gray-200">
-                <div class="flex items-center justify-between gap-3 mb-8">
-                    <div class="flex items-center gap-3">
-                        <Utensils class="h-7 w-7 text-primary" />
-                        <h2 class="text-2xl font-bold text-gray-900">Meal Choices</h2>
-                    </div>
-                    <div class="flex items-center gap-3">
-                        <Button variant="outline" @click="showAddDishDialog = true">
-                            <PlusCircle class="h-4 w-4 mr-2" />
-                            Add Dish
-                        </Button>
-                        <Button variant="outline" asChild>
-                            <Link href="/catering/dishes">Manage Dishes</Link>
-                        </Button>
-                    </div>
-                </div>
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-                    <Card v-for="category in mealCategories" :key="category.title" class="overflow-hidden">
-                        <div class="bg-primary/10 p-4">
-                            <div class="text-lg font-bold text-primary">
-                                {{ category.title }}
-                            </div>
-                        </div>
-                        <CardContent class="p-6">
-                            <ul class="space-y-3">
-                                <li v-for="item in category.items" :key="item"
-                                    class="flex items-center justify-between text-gray-600 hover:text-primary transition-colors">
-                                    <div class="flex items-start flex-1">
-                                        <span class="h-1.5 w-1.5 rounded-full bg-primary mr-2 mt-2"></span>
-                                        <span>{{ item }}</span>
+                <!-- Package Management Tab -->
+                <TabsContent value="packages" class="mt-6">
+                    <Card>
+                        <CardHeader class="flex flex-row items-center justify-between">
+                            <CardTitle>Packages</CardTitle>
+                            <Button variant="outline" size="sm" class="gap-2" @click="addNewPackage">
+                                <Plus class="h-4 w-4" />
+                                Add Package
+                            </Button>
+                        </CardHeader>
+                        <CardContent>
+                            <div class="space-y-4">
+                                <div v-for="(pkg, index) in packages" :key="index"
+                                    class="flex items-center justify-between rounded-lg border p-4 transition-colors hover:bg-muted/50">
+                                    <div class="space-y-1">
+                                        <p class="text-sm font-medium">{{ pkg.name }}</p>
+                                        <p class="text-sm text-muted-foreground">₱{{ pkg.price }} - {{ pkg.meals }}
+                                            meals</p>
                                     </div>
-                                </li>
-                            </ul>
-                        </CardContent>
-                    </Card>
-                </div>
-            </div>
-
-            <!-- Add Dish Dialog -->
-            <Dialog v-model:open="showAddDishDialog">
-                <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle>Add New Dish</DialogTitle>
-                        <DialogDescription>
-                            Add a new dish to an existing category or create a new one.
-                        </DialogDescription>
-                    </DialogHeader>
-                    <div class="space-y-4 py-4">
-                        <div class="space-y-2">
-                            <label class="text-sm font-medium">Select Category</label>
-                            <div class="flex gap-2">
-                                <select v-model="selectedCategory"
-                                    class="flex-1 h-9 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
-                                    :class="{ 'border-red-500': showAddDishDialog && !selectedCategory }">
-                                    <option value="">Select a category</option>
-                                    <option v-for="category in mealCategories" :key="category.title"
-                                        :value="category.title">
-                                        {{ category.title }}
-                                    </option>
-                                </select>
-                                <div class="relative">
-                                    <Button variant="outline" @click="selectedCategory = ''">
-                                        <Plus class="h-4 w-4 mr-2" />
-                                        New
-                                    </Button>
+                                    <div class="flex items-center gap-2">
+                                        <Button variant="ghost" size="sm" @click="startEditing(index)">
+                                            <Edit2 class="h-4 w-4" />
+                                        </Button>
+                                        <Button variant="ghost" size="sm" @click="confirmDelete(index)">
+                                            <Trash2 class="h-4 w-4" />
+                                        </Button>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-
-                        <div v-if="!selectedCategory" class="space-y-2">
-                            <label class="text-sm font-medium">New Category Name</label>
-                            <div class="flex gap-2">
-                                <Input v-model="newCategory" placeholder="Enter new category name" />
-                                <Button variant="outline" @click="addNewCategory"
-                                    :disabled="!newCategory.trim() || mealCategories.some(cat => cat.title === newCategory.trim().toUpperCase())">
-                                    Add
-                                </Button>
-                            </div>
-                            <p v-if="newCategory.trim() && mealCategories.some(cat => cat.title === newCategory.trim().toUpperCase())"
-                                class="text-sm text-red-500">
-                                This category already exists
-                            </p>
-                        </div>
-
-                        <div class="space-y-2">
-                            <label class="text-sm font-medium">Dish Name</label>
-                            <Input v-model="newDish" placeholder="Enter dish name" :disabled="!selectedCategory"
-                                :class="{ 'border-red-500': showAddDishDialog && selectedCategory && !newDish.trim() }"
-                                @keyup.enter="addNewDish" />
-                            <p v-if="showAddDishDialog && selectedCategory && newDish.trim() &&
-                                mealCategories.some(cat => cat.title === selectedCategory && cat.items.includes(newDish.trim().toUpperCase()))"
-                                class="text-sm text-red-500">
-                                This dish already exists in the selected category
-                            </p>
-                        </div>
-                    </div>
-                    <DialogFooter>
-                        <Button variant="outline" @click="cancelAddDish">Cancel</Button>
-                        <Button @click="addNewDish"
-                            :disabled="!selectedCategory || !newDish.trim() ||
-                                mealCategories.some(cat => cat.title === selectedCategory && cat.items.includes(newDish.trim().toUpperCase()))">
-                            Add Dish
-                        </Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
-
-            <!-- Add Package Dialog -->
-            <Dialog v-model:open="showAddDialog">
-                <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle>Add New Package</DialogTitle>
-                        <DialogDescription>
-                            Create a new catering package. You can edit additional details after creating.
-                        </DialogDescription>
-                    </DialogHeader>
-                    <div class="space-y-4 py-4">
-                        <div class="space-y-2">
-                            <label class="text-sm font-medium">Package Name</label>
-                            <Input v-model="newPackage.name" placeholder="Enter package name"
-                                :class="{ 'border-red-500': showAddDialog && !newPackage.name.trim() }" />
-                        </div>
-                        <div class="space-y-2">
-                            <label class="text-sm font-medium">Price</label>
-                            <Input v-model="newPackage.price" type="number" placeholder="Enter price"
-                                :class="{ 'border-red-500': showAddDialog && newPackage.price <= 0 }" />
-                        </div>
-                        <div class="space-y-2">
-                            <label class="text-sm font-medium">Number of Meals</label>
-                            <Input v-model="newPackage.meals" type="number" placeholder="Enter number of meals"
-                                :class="{ 'border-red-500': showAddDialog && newPackage.meals <= 0 }" />
-                        </div>
-                        <div class="space-y-2">
-                            <label class="text-sm font-medium">Inclusions</label>
-                            <ul class="space-y-2 mb-2">
-                                <li v-for="(inclusion, index) in newPackage.includes" :key="index"
-                                    class="flex items-center justify-between bg-muted/50 px-3 py-1.5 rounded-md">
-                                    <span>{{ inclusion }}</span>
-                                    <Button variant="ghost" size="icon" @click="removeNewInclusion(index)">
-                                        <X class="h-4 w-4" />
-                                    </Button>
-                                </li>
-                            </ul>
-                            <div class="flex gap-2">
-                                <Input v-model="newInclusion" placeholder="Add new inclusion"
-                                    @keyup.enter="addNewInclusion" />
-                                <Button variant="outline" @click="addNewInclusion">
-                                    <Plus class="h-4 w-4" />
-                                </Button>
-                            </div>
-                        </div>
-                    </div>
-                    <DialogFooter>
-                        <Button variant="outline" @click="cancelAddPackage">Cancel</Button>
-                        <Button @click="confirmAddPackage"
-                            :disabled="!newPackage.name.trim() || newPackage.price <= 0 || newPackage.meals <= 0">
-                            Add Package
-                        </Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
-
-            <!-- Delete Confirmation Dialog -->
-            <Dialog v-model:open="showDeleteDialog">
-                <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle>Delete Dish</DialogTitle>
-                        <DialogDescription>
-                            Are you sure you want to delete this dish? This action cannot be undone.
-                        </DialogDescription>
-                    </DialogHeader>
-                    <DialogFooter>
-                        <Button variant="outline" @click="showDeleteDialog = false">Cancel</Button>
-                        <Button variant="destructive" @click="deleteDish()">
-                            Delete
-                        </Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
+                        </CardContent>
+                    </Card>
+                </TabsContent>
+            </Tabs>
         </div>
+
+        <!-- Add Package Dialog -->
+        <Dialog v-model:open="showAddDialog">
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>Add New Package</DialogTitle>
+                    <DialogDescription>
+                        Create a new catering package with details and inclusions.
+                    </DialogDescription>
+                </DialogHeader>
+                <div class="space-y-4 py-4">
+                    <div class="space-y-2">
+                        <label class="text-sm font-medium">Package Name</label>
+                        <Input v-model="newPackage.name" placeholder="Enter package name" />
+                    </div>
+                    <div class="space-y-2">
+                        <label class="text-sm font-medium">Price</label>
+                        <Input v-model="newPackage.price" type="number" placeholder="Enter price" />
+                    </div>
+                    <div class="space-y-2">
+                        <label class="text-sm font-medium">Number of Meals</label>
+                        <Input v-model="newPackage.meals" type="number" placeholder="Enter number of meals" />
+                    </div>
+                    <div class="space-y-2">
+                        <label class="text-sm font-medium">Inclusions</label>
+                        <div class="flex gap-2">
+                            <Input v-model="newInclusion" placeholder="Add inclusion" />
+                            <Button variant="outline" @click="addNewInclusion">
+                                <Plus class="h-4 w-4" />
+                            </Button>
+                        </div>
+                        <div class="flex flex-wrap gap-2 mt-2">
+                            <Badge v-for="(inclusion, index) in newPackage.includes" :key="index" variant="secondary">
+                                {{ inclusion }}
+                                <X class="h-3 w-3 ml-1 cursor-pointer" @click="removeNewInclusion(index)" />
+                            </Badge>
+                        </div>
+                    </div>
+                </div>
+                <DialogFooter>
+                    <Button variant="outline" @click="cancelAddPackage">Cancel</Button>
+                    <Button @click="confirmAddPackage">Add Package</Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+
+        <!-- Add Menu Dialog -->
+        <Dialog v-model:open="showAddMenuDialog">
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>Add Menu Item</DialogTitle>
+                    <DialogDescription>
+                        Add a new menu category or item to your menu.
+                    </DialogDescription>
+                </DialogHeader>
+                <div class="space-y-4 py-4">
+                    <div class="space-y-2">
+                        <label class="text-sm font-medium">Type</label>
+                        <div class="flex gap-4">
+                            <Button variant="outline" :class="{ 'bg-primary/10': menuType === 'category' }"
+                                @click="menuType = 'category'">
+                                Category
+                            </Button>
+                            <Button variant="outline" :class="{ 'bg-primary/10': menuType === 'menu' }"
+                                @click="menuType = 'menu'">
+                                Menu Item
+                            </Button>
+                        </div>
+                    </div>
+                    <div v-if="menuType === 'category'" class="space-y-2">
+                        <label class="text-sm font-medium">Category Name</label>
+                        <Input v-model="newCategory" placeholder="Enter category name" />
+                    </div>
+                    <div v-else class="space-y-2">
+                        <label class="text-sm font-medium">Category</label>
+                        <select v-model="selectedCategory" class="w-full rounded-md border p-2">
+                            <option value="">Select a category</option>
+                            <option v-for="category in menuCategories" :key="category.title" :value="category.title">
+                                {{ category.title }}
+                            </option>
+                        </select>
+                    </div>
+                    <div v-if="menuType === 'menu'" class="space-y-2">
+                        <label class="text-sm font-medium">Menu Item</label>
+                        <Input v-model="newMenuItem" placeholder="Enter menu item name" />
+                    </div>
+                </div>
+                <DialogFooter>
+                    <Button variant="outline" @click="cancelAddMenu">Cancel</Button>
+                    <Button @click="addNewMenu">Add</Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+
+        <!-- Delete Confirmation Dialog -->
+        <Dialog v-model:open="showDeleteDialog">
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>Delete Item</DialogTitle>
+                    <DialogDescription>
+                        Are you sure you want to delete this item? This action cannot be undone.
+                    </DialogDescription>
+                </DialogHeader>
+                <DialogFooter>
+                    <Button variant="outline" @click="showDeleteDialog = false">Cancel</Button>
+                    <Button variant="destructive" @click="deleteMenuItem()">
+                        Delete
+                    </Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
     </AppLayout>
 </template>
 
 <style scoped>
 .card {
-    @apply transition-all duration-200 shadow border border-gray-200;
+    @apply transition-all duration-200;
 }
 
 .card:hover {
-    @apply transform -translate-y-1 shadow-md;
+    @apply shadow-md;
 }
 </style>

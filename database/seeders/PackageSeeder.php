@@ -3,7 +3,7 @@
 namespace Database\Seeders;
 
 use App\Models\Package;
-use App\Models\PackageInclusion;
+use App\Models\Inclusion;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
@@ -18,65 +18,83 @@ class PackageSeeder extends Seeder
     {
         $now = Carbon::now();
 
-        $packages = [
-            [
-                'name' => 'Basic Package',
-                'price' => 299.99,
-                'meal_limit' => 2,
-                'status' => 'active',
-                'created_at' => $now,
-                'updated_at' => $now,
-            ],
-            [
-                'name' => 'Premium Package',
-                'price' => 399.99,
-                'meal_limit' => 3,
-                'status' => 'active',
-                'created_at' => $now,
-                'updated_at' => $now,
-            ],
-            [
-                'name' => 'Deluxe Package',
-                'price' => 499.99,
-                'meal_limit' => 5,
-                'status' => 'active',
-                'created_at' => $now,
-                'updated_at' => $now,
-            ],
-        ];
-
-        // Standard inclusions for all packages
+        // Create standard inclusions first
         $standardInclusions = [
             [
                 'name' => 'Rice',
-                'description' => 'Unlimited steamed white rice',
                 'created_at' => $now,
                 'updated_at' => $now,
             ],
             [
                 'name' => 'Drinks',
-                'description' => 'Unlimited iced tea',
                 'created_at' => $now,
                 'updated_at' => $now,
             ],
         ];
 
-        foreach ($packages as $packageData) {
-            try {
-                $package = Package::create($packageData);
+        // Create inclusions and store their IDs
+        $inclusionIds = collect($standardInclusions)->map(function ($inclusion) {
+            return Inclusion::create($inclusion)->id;
+        });
 
-                if (!$package) {
-                    throw new \Exception("Failed to create package: {$packageData['name']}");
-                }
+        $packages = [
+            [
+                'name' => 'Package A',
+                'price' => 280,
+                'meal_limit' => 5,
+                'minimum_guests' => 50,
+                'maximum_guests' => 100,
+                'status' => 'active',
+                'created_at' => $now,
+                'updated_at' => $now,
+            ],
+            [
+                'name' => 'Package B',
+                'price' => 310,
+                'meal_limit' => 6,
+                'minimum_guests' => 75,
+                'maximum_guests' => 150,
+                'status' => 'active',
+                'created_at' => $now,
+                'updated_at' => $now,
+            ],
+            [
+                'name' => 'Package C',
+                'price' => 350,
+                'meal_limit' => 5,
+                'minimum_guests' => 100,
+                'maximum_guests' => 200,
+                'status' => 'active',
+                'created_at' => $now,
+                'updated_at' => $now,
+            ],
+            [
+                'name' => 'Package D',
+                'price' => 380,
+                'meal_limit' => 8,
+                'minimum_guests' => 150,
+                'maximum_guests' => 300,
+                'status' => 'active',
+                'created_at' => $now,
+                'updated_at' => $now,
+            ],
+        ];
 
-                // Add standard inclusions to each package
-                foreach ($standardInclusions as $inclusion) {
-                    $inclusion['package_id'] = $package->id;
-                    PackageInclusion::create($inclusion);
+        DB::transaction(function () use ($packages, $inclusionIds) {
+            foreach ($packages as $packageData) {
+                try {
+                    $package = Package::create($packageData);
+
+                    if (!$package) {
+                        throw new \Exception("Failed to create package: {$packageData['name']}");
+                    }
+
+                    // Attach all standard inclusions to the package
+                    $package->inclusions()->attach($inclusionIds);
+                } catch (\Exception $e) {
+                    throw new \Exception("Error seeding package {$packageData['name']}: " . $e->getMessage());
                 }
-            } catch (\Exception $e) {
-                throw new \Exception("Error seeding package {$packageData['name']}: " . $e->getMessage());
             }
-        }
+        });
     }
 }

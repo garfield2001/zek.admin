@@ -13,11 +13,11 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         $this->call([
-            UserSeeder::class,           // First, create users
-            MealTypeSeeder::class,       // Then meal types
-            DishSeeder::class,           // Then dishes (needs meal types)
-            PackageSeeder::class,        // Then packages
-            CateringSettingSeeder::class, // Finally settings
+            UserSeeder::class,
+            MealTypeSeeder::class,
+            DishSeeder::class,
+            PackageSeeder::class,
+            CateringSettingSeeder::class,
         ]);
     }
 }

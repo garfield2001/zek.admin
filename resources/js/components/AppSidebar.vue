@@ -22,35 +22,26 @@ const mainNavGroups: NavGroup[] = [
                 href: '/reservations',
                 icon: CalendarCheck,
             },
-            {
-                title: 'Reports',
-                href: '/reports',
-                icon: ClipboardMinus,
-            },
-        ],
-    },
-    {
-        title: 'Manage Catering',
-        navItems: [
+
             {
                 title: 'Manage Catering',
                 href: '/catering',
                 icon: Soup,
-            }
-        ],
-    },
-    {
-        title: 'Manage Add-Ons',
-        navItems: [
+            },
             {
-                title: 'Add-Ons Categories',
+                title: 'Manage Add-Ons',
                 href: '',
                 icon: ChartBarStacked,
             },
+        ],
+    },
+    {
+        title: 'Others',
+        navItems: [
             {
-                title: 'Add-Ons Packages',
-                href: '',
-                icon: ChartBarStacked,
+                title: 'Reports',
+                href: '/reports',
+                icon: ClipboardMinus,
             },
         ],
     },

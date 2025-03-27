@@ -218,54 +218,21 @@ const columns: ColumnDef<Package>[] = [
     {
         accessorKey: 'includes',
         header: 'Inclusions',
-        cell: ({ row, table }) => {
-            const index = table.getRowModel().rows.findIndex((r: { id: string }) => r.id === row.id);
-            return h('div', { class: 'min-w-[120px]' }, [
-                !getEditingState(index).value?.isEditing
-                    ? h('ul', { class: 'list-disc list-inside space-y-0.5' },
-                        row.original.includes.map(item =>
-                            h('li', { class: 'text-sm text-muted-foreground' }, item)
-                        )
-                    )
-                    : h('div', { class: 'space-y-1' }, [
-                        h('ul', { class: 'space-y-0.5' },
-                            row.original.includes.map((item, inclusionIndex) =>
-                                h('li', { class: 'flex items-center gap-1' }, [
-                                    h(Input, {
-                                        modelValue: row.original.includes[inclusionIndex],
-                                        'onUpdate:modelValue': (val: string | number) => {
-                                            if (typeof val === 'string') {
-                                                row.original.includes[inclusionIndex] = val;
-                                            }
-                                        },
-                                        class: 'flex-1'
-                                    }),
-                                    h(Button, {
-                                        variant: 'ghost',
-                                        size: 'icon',
-                                        onClick: () => removeInclusion(index, inclusionIndex)
-                                    }, () => h(X, { class: 'h-4 w-4' }))
-                                ])
-                            )
-                        ),
-                        h('div', { class: 'flex gap-1' }, [
-                            h(Input, {
-                                modelValue: getEditingState(index).value.newInclusion,
-                                'onUpdate:modelValue': (val: string | number) => {
-                                    if (typeof val === 'string') {
-                                        getEditingState(index).value.newInclusion = val;
-                                    }
-                                },
-                                placeholder: 'Add new inclusion',
-                                onKeyup: (e: KeyboardEvent) => e.key === 'Enter' && addInclusion(index)
-                            }),
-                            h(Button, {
-                                variant: 'outline',
-                                size: 'icon',
-                                onClick: () => addInclusion(index)
-                            }, () => h(Plus, { class: 'h-4 w-4' }))
-                        ])
-                    ])
+        cell: ({ row }) => {
+            return h('div', { class: 'flex items-center gap-2' }, [
+                h(Button, {
+                    variant: 'ghost',
+                    size: 'sm',
+                    class: 'flex items-center gap-2',
+                    onClick: () => {
+                        selectedInclusions.value = row.original.includes;
+                        selectedPackageName.value = row.original.name;
+                        showInclusionsDialog.value = true;
+                    }
+                }, () => [
+                    h(Eye, { class: 'h-4 w-4' }),
+                    h('span', { class: 'text-sm' }, `${row.original.includes.length} items`)
+                ])
             ]);
         },
         size: 120,
@@ -548,6 +515,11 @@ const allSelectedActive = computed(() => {
         return pkg?.status === 'active';
     });
 });
+
+// Add these refs after other refs
+const showInclusionsDialog = ref(false);
+const selectedInclusions = ref<string[]>([]);
+const selectedPackageName = ref('');
 </script>
 
 <template>
@@ -809,6 +781,30 @@ const allSelectedActive = computed(() => {
                     <DialogFooter>
                         <Button variant="outline" @click="showEditDialog = false">Cancel</Button>
                         <Button @click="savePackage">Save Changes</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            <!-- Inclusions View Dialog -->
+            <Dialog v-model:open="showInclusionsDialog">
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Package Inclusions</DialogTitle>
+                        <DialogDescription>
+                            Viewing inclusions for {{ selectedPackageName }}
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div class="py-4">
+                        <div class="space-y-4">
+                            <div v-for="(inclusion, index) in selectedInclusions" :key="index"
+                                class="flex items-center gap-2 p-3 rounded-lg bg-muted/50">
+                                <div class="h-2 w-2 rounded-full bg-primary"></div>
+                                <span class="text-sm">{{ inclusion }}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <DialogFooter>
+                        <Button @click="showInclusionsDialog = false">Close</Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
