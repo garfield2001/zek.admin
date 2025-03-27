@@ -8,14 +8,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ref, reactive, computed } from 'vue';
 import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
-} from '@/components/ui/table';
-import {
     Dialog,
     DialogContent,
     DialogDescription,
@@ -226,7 +218,6 @@ const saveMinimumPersons = () => {
 
 // Dialog States
 const showAddDialog = ref(false);
-const showAddMealDialog = ref(false);
 const showAddDishDialog = ref(false);
 const showDeleteDialog = ref(false);
 
@@ -282,82 +273,18 @@ const deletePackage = () => {
     }
 };
 
-// Category Management
-const defaultCategory = {
-    title: '',
-    items: []
-};
-
-const newCategory = reactive<MealCategory>({ ...defaultCategory });
-const categoryToDelete = ref<string | null>(null);
-const categoryToEdit = ref<string | null>(null);
-const editingCategory = reactive<MealCategory>({ ...defaultCategory });
-
-const resetNewCategory = () => {
-    Object.assign(newCategory, defaultCategory);
-};
-
-const cancelAddCategory = () => {
-    showAddMealDialog.value = false;
-    resetNewCategory();
-};
-
-const addNewCategory = () => {
-    if (newCategory.title.trim() && !mealCategories.some(cat => cat.title === newCategory.title.trim())) {
-        mealCategories.push({
-            title: newCategory.title.trim(),
-            items: []
-        });
-        showAddMealDialog.value = false;
-        resetNewCategory();
-    }
-};
-
-const startEditingCategory = (title: string) => {
-    const category = mealCategories.find(cat => cat.title === title);
-    if (category) {
-        categoryToEdit.value = title;
-        Object.assign(editingCategory, category);
-    }
-};
-
-const saveCategory = () => {
-    if (categoryToEdit.value && editingCategory.title.trim()) {
-        const index = mealCategories.findIndex(cat => cat.title === categoryToEdit.value);
-        if (index !== -1) {
-            mealCategories[index] = { ...editingCategory };
-            categoryToEdit.value = null;
-            Object.assign(editingCategory, defaultCategory);
-        }
-    }
-};
-
-const confirmDeleteCategory = (title: string) => {
-    categoryToDelete.value = title;
-    showDeleteDialog.value = true;
-};
-
-const deleteCategory = () => {
-    if (categoryToDelete.value) {
-        const index = mealCategories.findIndex(cat => cat.title === categoryToDelete.value);
-        if (index !== -1) {
-            mealCategories.splice(index, 1);
-            showDeleteDialog.value = false;
-            categoryToDelete.value = null;
-        }
-    }
-};
-
 // Dish Management
 const selectedCategory = ref('');
 const newDish = ref('');
 const dishToDelete = ref<{ category: string; dish: string } | null>(null);
 const dishToEdit = ref<{ category: string; dish: string } | null>(null);
 const editingDish = ref('');
+const newCategory = ref('');
 
 const resetNewDish = () => {
     selectedCategory.value = '';
     newDish.value = '';
+    newCategory.value = '';
 };
 
 const cancelAddDish = () => {
@@ -413,6 +340,18 @@ const deleteDish = () => {
         }
     }
 };
+
+const addNewCategory = () => {
+    const categoryName = newCategory.value.trim().toUpperCase();
+    if (categoryName && !mealCategories.some(cat => cat.title === categoryName)) {
+        mealCategories.push({
+            title: categoryName,
+            items: []
+        });
+        selectedCategory.value = categoryName;
+        newCategory.value = '';
+    }
+};
 </script>
 
 <template>
@@ -420,7 +359,7 @@ const deleteDish = () => {
 
         <Head title="Manage Catering" />
 
-        <div class="flex h-full flex-1 flex-col gap-12 rounded-xl px-6 py-8 max-w-7xl mx-auto">
+        <div class="flex h-full flex-1 flex-col gap-12 rounded-xl px-6 py-8 max-w-7xl mx-auto bg-gray-50/50">
             <!-- Header -->
             <div class="text-center">
                 <h1 class="text-4xl font-bold text-gray-900 mb-2">Catering Packages </h1>
@@ -428,7 +367,7 @@ const deleteDish = () => {
             </div>
 
             <!-- Packages Section -->
-            <div>
+            <div class="bg-white rounded-xl p-8 shadow-md border border-gray-200">
                 <div class="flex items-center justify-between gap-3 mb-6">
                     <div class="flex items-center gap-3">
                         <UtensilsCrossed class="h-7 w-7 text-primary" />
@@ -532,6 +471,124 @@ const deleteDish = () => {
                 </div>
             </div>
 
+            <!-- Section Divider -->
+            <div class="relative py-2">
+                <div class="absolute inset-0 flex items-center">
+                    <div class="w-full border-t border-gray-200"></div>
+                </div>
+                <div class="relative flex justify-center">
+                    <span class="bg-gray-50/50 px-6 py-1 text-sm font-medium text-gray-500">MENU CONFIGURATION</span>
+                </div>
+            </div>
+
+            <!-- Meal Choices Section -->
+            <div class="bg-white rounded-xl p-8 shadow-md border border-gray-200">
+                <div class="flex items-center justify-between gap-3 mb-8">
+                    <div class="flex items-center gap-3">
+                        <Utensils class="h-7 w-7 text-primary" />
+                        <h2 class="text-2xl font-bold text-gray-900">Meal Choices</h2>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <Button variant="outline" @click="showAddDishDialog = true">
+                            <PlusCircle class="h-4 w-4 mr-2" />
+                            Add Dish
+                        </Button>
+                        <Button variant="outline" asChild>
+                            <Link href="/catering/dishes">Manage Dishes</Link>
+                        </Button>
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+                    <Card v-for="category in mealCategories" :key="category.title" class="overflow-hidden">
+                        <div class="bg-primary/10 p-4">
+                            <div class="text-lg font-bold text-primary">
+                                {{ category.title }}
+                            </div>
+                        </div>
+                        <CardContent class="p-6">
+                            <ul class="space-y-3">
+                                <li v-for="item in category.items" :key="item"
+                                    class="flex items-center justify-between text-gray-600 hover:text-primary transition-colors">
+                                    <div class="flex items-start flex-1">
+                                        <span class="h-1.5 w-1.5 rounded-full bg-primary mr-2 mt-2"></span>
+                                        <span>{{ item }}</span>
+                                    </div>
+                                </li>
+                            </ul>
+                        </CardContent>
+                    </Card>
+                </div>
+            </div>
+
+            <!-- Add Dish Dialog -->
+            <Dialog v-model:open="showAddDishDialog">
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Add New Dish</DialogTitle>
+                        <DialogDescription>
+                            Add a new dish to an existing category or create a new one.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div class="space-y-4 py-4">
+                        <div class="space-y-2">
+                            <label class="text-sm font-medium">Select Category</label>
+                            <div class="flex gap-2">
+                                <select v-model="selectedCategory"
+                                    class="flex-1 h-9 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                                    :class="{ 'border-red-500': showAddDishDialog && !selectedCategory }">
+                                    <option value="">Select a category</option>
+                                    <option v-for="category in mealCategories" :key="category.title"
+                                        :value="category.title">
+                                        {{ category.title }}
+                                    </option>
+                                </select>
+                                <div class="relative">
+                                    <Button variant="outline" @click="selectedCategory = ''">
+                                        <Plus class="h-4 w-4 mr-2" />
+                                        New
+                                    </Button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div v-if="!selectedCategory" class="space-y-2">
+                            <label class="text-sm font-medium">New Category Name</label>
+                            <div class="flex gap-2">
+                                <Input v-model="newCategory" placeholder="Enter new category name" />
+                                <Button variant="outline" @click="addNewCategory"
+                                    :disabled="!newCategory.trim() || mealCategories.some(cat => cat.title === newCategory.trim().toUpperCase())">
+                                    Add
+                                </Button>
+                            </div>
+                            <p v-if="newCategory.trim() && mealCategories.some(cat => cat.title === newCategory.trim().toUpperCase())"
+                                class="text-sm text-red-500">
+                                This category already exists
+                            </p>
+                        </div>
+
+                        <div class="space-y-2">
+                            <label class="text-sm font-medium">Dish Name</label>
+                            <Input v-model="newDish" placeholder="Enter dish name" :disabled="!selectedCategory"
+                                :class="{ 'border-red-500': showAddDishDialog && selectedCategory && !newDish.trim() }"
+                                @keyup.enter="addNewDish" />
+                            <p v-if="showAddDishDialog && selectedCategory && newDish.trim() &&
+                                mealCategories.some(cat => cat.title === selectedCategory && cat.items.includes(newDish.trim().toUpperCase()))"
+                                class="text-sm text-red-500">
+                                This dish already exists in the selected category
+                            </p>
+                        </div>
+                    </div>
+                    <DialogFooter>
+                        <Button variant="outline" @click="cancelAddDish">Cancel</Button>
+                        <Button @click="addNewDish"
+                            :disabled="!selectedCategory || !newDish.trim() ||
+                                mealCategories.some(cat => cat.title === selectedCategory && cat.items.includes(newDish.trim().toUpperCase()))">
+                            Add Dish
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
             <!-- Add Package Dialog -->
             <Dialog v-model:open="showAddDialog">
                 <DialogContent>
@@ -591,168 +648,15 @@ const deleteDish = () => {
             <Dialog v-model:open="showDeleteDialog">
                 <DialogContent>
                     <DialogHeader>
-                        <DialogTitle>Delete {{ categoryToDelete ? 'Category' : 'Dish' }}</DialogTitle>
+                        <DialogTitle>Delete Dish</DialogTitle>
                         <DialogDescription>
-                            Are you sure you want to delete this {{ categoryToDelete ? 'category' : 'dish' }}? This
-                            action cannot be undone.
+                            Are you sure you want to delete this dish? This action cannot be undone.
                         </DialogDescription>
                     </DialogHeader>
                     <DialogFooter>
                         <Button variant="outline" @click="showDeleteDialog = false">Cancel</Button>
-                        <Button variant="destructive" @click="categoryToDelete ? deleteCategory() : deleteDish()">
+                        <Button variant="destructive" @click="deleteDish()">
                             Delete
-                        </Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
-
-            <!-- Meal Choices Section -->
-            <div>
-                <div class="flex items-center justify-between gap-3 mb-8">
-                    <div class="flex items-center gap-3">
-                        <Utensils class="h-7 w-7 text-primary" />
-                        <h2 class="text-2xl font-bold text-gray-900">Meal Choices</h2>
-                    </div>
-                    <div class="flex items-center gap-3">
-                        <Button variant="outline" @click="showAddMealDialog = true">
-                            <PlusCircle class="h-4 w-4 mr-2" />
-                            Add Category
-                        </Button>
-                        <Button variant="outline" @click="showAddDishDialog = true">
-                            <PlusCircle class="h-4 w-4 mr-2" />
-                            Add Dish
-                        </Button>
-                        <Button variant="outline" asChild>
-                            <Link href="/catering/categories">Manage Categories</Link>
-                        </Button>
-                        <Button variant="outline" asChild>
-                            <Link href="/catering/dishes">Manage Dishes</Link>
-                        </Button>
-                    </div>
-                </div>
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-                    <Card v-for="category in mealCategories" :key="category.title" class="overflow-hidden">
-                        <div class="bg-primary/10 p-4 flex justify-between items-center">
-                            <div v-if="categoryToEdit !== category.title" class="text-lg font-bold text-primary">
-                                {{ category.title }}
-                            </div>
-                            <Input v-else v-model="editingCategory.title" class="w-full" />
-                            <div class="flex items-center gap-2">
-                                <Button variant="ghost" size="icon"
-                                    @click="categoryToEdit === category.title ? saveCategory() : startEditingCategory(category.title)">
-                                    <Edit2 v-if="categoryToEdit !== category.title" class="h-4 w-4" />
-                                    <Save v-else class="h-4 w-4" />
-                                </Button>
-                                <Button variant="ghost" size="icon" class="text-destructive"
-                                    @click="confirmDeleteCategory(category.title)">
-                                    <Trash2 class="h-4 w-4" />
-                                </Button>
-                            </div>
-                        </div>
-                        <CardContent class="p-6">
-                            <ul class="space-y-3">
-                                <li v-for="item in category.items" :key="item"
-                                    class="flex items-center justify-between text-gray-600 hover:text-primary transition-colors">
-                                    <div class="flex items-start flex-1">
-                                        <span class="h-1.5 w-1.5 rounded-full bg-primary mr-2 mt-2"></span>
-                                        <span
-                                            v-if="!dishToEdit || dishToEdit.category !== category.title || dishToEdit.dish !== item">
-                                            {{ item }}
-                                        </span>
-                                        <Input v-else v-model="editingDish" class="flex-1" />
-                                    </div>
-                                    <div v-if="categoryToEdit === category.title" class="flex items-center gap-2 ml-2">
-                                        <Button
-                                            v-if="!dishToEdit || dishToEdit.category !== category.title || dishToEdit.dish !== item"
-                                            variant="ghost" size="icon" @click="startEditingDish(category.title, item)">
-                                            <Edit2 class="h-4 w-4" />
-                                        </Button>
-                                        <Button v-else variant="ghost" size="icon" @click="saveDish">
-                                            <Save class="h-4 w-4" />
-                                        </Button>
-                                        <Button variant="ghost" size="icon" class="text-destructive"
-                                            @click="confirmDeleteDish(category.title, item)">
-                                            <Trash2 class="h-4 w-4" />
-                                        </Button>
-                                    </div>
-                                </li>
-                            </ul>
-                        </CardContent>
-                    </Card>
-                </div>
-            </div>
-
-            <!-- Add Category Dialog -->
-            <Dialog v-model:open="showAddMealDialog">
-                <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle>Add New Category</DialogTitle>
-                        <DialogDescription>
-                            Create a new meal category to organize your dishes.
-                        </DialogDescription>
-                    </DialogHeader>
-                    <div class="space-y-4 py-4">
-                        <div class="space-y-2">
-                            <label class="text-sm font-medium">Category Name</label>
-                            <Input v-model="newCategory.title" placeholder="Enter category name"
-                                :class="{ 'border-red-500': showAddMealDialog && !newCategory.title.trim() }"
-                                @keyup.enter="addNewCategory" />
-                            <p v-if="showAddMealDialog && mealCategories.some(cat => cat.title === newCategory.title.trim())"
-                                class="text-sm text-red-500">
-                                This category already exists
-                            </p>
-                        </div>
-                    </div>
-                    <DialogFooter>
-                        <Button variant="outline" @click="cancelAddCategory">Cancel</Button>
-                        <Button @click="addNewCategory"
-                            :disabled="!newCategory.title.trim() || mealCategories.some(cat => cat.title === newCategory.title.trim())">
-                            Add Category
-                        </Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
-
-            <!-- Add Dish Dialog -->
-            <Dialog v-model:open="showAddDishDialog">
-                <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle>Add New Dish</DialogTitle>
-                        <DialogDescription>
-                            Add a new dish to an existing category.
-                        </DialogDescription>
-                    </DialogHeader>
-                    <div class="space-y-4 py-4">
-                        <div class="space-y-2">
-                            <label class="text-sm font-medium">Select Category</label>
-                            <select v-model="selectedCategory"
-                                class="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
-                                :class="{ 'border-red-500': showAddDishDialog && !selectedCategory }">
-                                <option value="">Select a category</option>
-                                <option v-for="category in mealCategories" :key="category.title"
-                                    :value="category.title">
-                                    {{ category.title }}
-                                </option>
-                            </select>
-                        </div>
-                        <div class="space-y-2">
-                            <label class="text-sm font-medium">Dish Name</label>
-                            <Input v-model="newDish" placeholder="Enter dish name" :disabled="!selectedCategory"
-                                :class="{ 'border-red-500': showAddDishDialog && selectedCategory && !newDish.trim() }"
-                                @keyup.enter="addNewDish" />
-                            <p v-if="showAddDishDialog && selectedCategory && newDish.trim() &&
-                                mealCategories.some(cat => cat.title === selectedCategory && cat.items.includes(newDish.trim().toUpperCase()))"
-                                class="text-sm text-red-500">
-                                This dish already exists in the selected category
-                            </p>
-                        </div>
-                    </div>
-                    <DialogFooter>
-                        <Button variant="outline" @click="cancelAddDish">Cancel</Button>
-                        <Button @click="addNewDish"
-                            :disabled="!selectedCategory || !newDish.trim() ||
-                                mealCategories.some(cat => cat.title === selectedCategory && cat.items.includes(newDish.trim().toUpperCase()))">
-                            Add Dish
                         </Button>
                     </DialogFooter>
                 </DialogContent>
@@ -763,10 +667,10 @@ const deleteDish = () => {
 
 <style scoped>
 .card {
-    @apply transition-all duration-200;
+    @apply transition-all duration-200 shadow border border-gray-200;
 }
 
 .card:hover {
-    @apply transform -translate-y-1;
+    @apply transform -translate-y-1 shadow-md;
 }
 </style>
