@@ -59,6 +59,13 @@ const mainNavItems: NavItem[] = [
         href: '/reports',
         icon: LayoutGrid,
     },
+    {
+        title: 'Customer Reservation',
+        href: '/customer-reservation',
+        icon: LayoutGrid,
+    },
+
+
 
 
 ];

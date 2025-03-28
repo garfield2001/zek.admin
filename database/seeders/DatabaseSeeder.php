@@ -18,6 +18,9 @@ class DatabaseSeeder extends Seeder
             MenuSeeder::class,
             PackageSeeder::class,
             CateringSettingSeeder::class,
+            AddonCategorySeeder::class,
+            AddonPackageSeeder::class,
+            AddonPackageMenuSeeder::class,
         ]);
     }
 }

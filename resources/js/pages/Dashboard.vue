@@ -42,12 +42,12 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
 ];
 
-// Mock data - Replace with actual data from your backend
+// test data
 const stats = {
-    totalReservations: 156, // All-time total
-    activeReservations: 23, // Current month's active reservations
-    monthlyRevenue: 45600, // Current month's revenue
-    monthlyGuests: 2450, // Current month's total guests
+    totalReservations: 156,
+    activeReservations: 23,
+    monthlyRevenue: 45600,
+    monthlyGuests: 2450,
     upcomingEvents: [
         { date: '2024-03-28', client: 'John Doe', package: 'Wedding Package', guests: 100 },
         { date: '2024-03-30', client: 'Jane Smith', package: 'Corporate Event', guests: 50 },
@@ -59,7 +59,9 @@ const stats = {
         const currentMonth = currentDate.getMonth();
         const trend = [];
 
-        // Get last 6 months including current month
+
+        // https://stackoverflow.com/questions/10420352/getting-the-month-name-from-a-date-object
+        // Get the current month (0-11)
         for (let i = 5; i >= 0; i--) {
             const monthIndex = (currentMonth - i + 12) % 12;
             trend.push({
@@ -72,7 +74,6 @@ const stats = {
     })()
 };
 
-// Chart data
 const chartData = {
     labels: stats.revenueTrend.map(item => item.month),
     datasets: [
@@ -304,7 +305,7 @@ const analyticsData = {
                                 class="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
                             </div>
                             <div class="absolute right-4 top-4 opacity-10 pointer-events-none">
-                                <CalendarCheck class="h-20 w-20 text-primary" />
+                                <CalendarCheck class="h-20 w-20 text-amber-500" />
                             </div>
                             <CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2 relative z-10">
                                 <CardTitle class="text-sm font-medium text-primary">Total Reservations</CardTitle>
@@ -581,7 +582,7 @@ const analyticsData = {
                                                 <p class="text-sm text-muted-foreground">Returning Customers</p>
                                                 <p class="text-2xl font-bold">{{
                                                     analyticsData.customerInsights.customerRetention.returningCustomers
-                                                }}</p>
+                                                    }}</p>
                                             </div>
                                             <div class="col-span-2 rounded-lg border p-4">
                                                 <p class="text-sm text-muted-foreground">Retention Rate</p>
@@ -604,7 +605,7 @@ const analyticsData = {
                                                         :style="{ width: `${(day.bookings / 65) * 100}%` }"></div>
                                                 </div>
                                                 <div class="w-24 text-sm text-right">₱{{ (day.revenue / 1000).toFixed(1)
-                                                }}k</div>
+                                                    }}k</div>
                                             </div>
                                         </div>
                                     </div>

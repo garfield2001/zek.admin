@@ -17,7 +17,7 @@ import {
     Settings, BarChart, TrendingUp, ChevronRight,
     ArrowRight, Plus, Edit, Edit2, Trash2,
     X, ChevronLeft, ChevronsLeft, ChevronsRight, ChevronsUpDown,
-    Image as ImageIcon, ExternalLink, Search
+    Image as ImageIcon, ExternalLink, Search, AlertTriangle
 } from 'lucide-vue-next';
 import { Link } from '@inertiajs/vue3';
 import { router } from '@inertiajs/vue3';
@@ -58,8 +58,6 @@ import {
 } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 
-import Menus from './catering/Menus.vue';
-
 const breadcrumbs: BreadcrumbItem[] = [
     {
         title: 'Catering Overview',
@@ -72,7 +70,14 @@ const stats = ref({
     totalPackages: 0,
     totalMenuItems: 0,
     totalRevenue: 0,
-    upcomingEvents: 0,
+    todayEvents: 0,
+    todayGuests: 0,
+    activeOrders: 0,
+    pendingOrders: 0,
+    todayRevenue: 0,
+    revenueTrend: '+0% from last month',
+    lowStockItems: 0,
+    criticalItems: 0,
     trends: {
         packages: '+0 from last month',
         menuItems: '+0 from last month',
@@ -100,6 +105,7 @@ interface Menu {
     category: string;
     image_url?: string;
     createdAt: string;
+    quantity?: number;
 }
 
 interface Package {
@@ -721,6 +727,200 @@ const confirmDeleteSelectedPackages = () => {
     }
 };
 
+// Add these after the existing interfaces
+interface AddonCategory {
+    id: number;
+    name: string;
+    description?: string;
+    status: 'active' | 'inactive';
+}
+
+interface AddonPackage {
+    id: number;
+    category_id: number;
+    name: string;
+    description?: string;
+    serving_size: number;
+    price?: number;
+    status: 'active' | 'inactive';
+    image_url?: string;
+    createdAt: string;
+}
+
+interface AddonPackageMenu {
+    id: number;
+    package_id: number;
+    menu_id: number;
+    is_fixed: boolean;
+    can_change: boolean;
+    price?: number;
+    quantity?: number;
+    menu?: Menu;
+}
+
+// Add after the packages ref
+const addonCategories = ref<AddonCategory[]>([
+    {
+        id: 1,
+        name: 'Bellychon Package',
+        description: 'Special lechon belly packages with sides',
+        status: 'active'
+    },
+    {
+        id: 2,
+        name: 'Food Tray Menu',
+        description: 'Individual food trays perfect for events',
+        status: 'active'
+    }
+]);
+
+const addonPackages = ref<AddonPackage[]>([
+    {
+        id: 1,
+        category_id: 1,
+        name: 'Package A',
+        description: 'Lechon Belly 3kgs with sides',
+        serving_size: 15,
+        price: 4000,
+        status: 'active',
+        image_url: 'https://images.unsplash.com/photo-1555244162-803834f70033',
+        createdAt: '2024-03-20'
+    },
+    {
+        id: 2,
+        category_id: 1,
+        name: 'Package B',
+        description: 'Lechon Belly 3kgs with additional sides',
+        serving_size: 15,
+        price: 5000,
+        status: 'active',
+        image_url: 'https://images.unsplash.com/photo-1504674900247-0877df9cc836',
+        createdAt: '2024-03-20'
+    },
+    {
+        id: 3,
+        category_id: 2,
+        name: 'Beef Trays',
+        description: 'Selection of beef dishes',
+        serving_size: 15,
+        status: 'active',
+        image_url: 'https://images.unsplash.com/photo-1464366400600-7168b8af9bc3',
+        createdAt: '2024-03-20'
+    },
+    {
+        id: 4,
+        category_id: 2,
+        name: 'Seafood Trays',
+        description: 'Selection of seafood specialties',
+        serving_size: 15,
+        status: 'active',
+        image_url: 'https://images.unsplash.com/photo-1464366400600-7168b8af9bc3',
+        createdAt: '2024-03-20'
+    },
+]);
+
+const addonPackageMenus = ref<AddonPackageMenu[]>([
+    // Package A menus
+    {
+        id: 1,
+        package_id: 1,
+        menu_id: 1,
+        is_fixed: true,
+        can_change: false,
+        quantity: 3,
+        menu: {
+            id: 1,
+            name: 'LECHON BELLY',
+            description: 'Crispy lechon belly',
+            price: 0,
+            is_available: true,
+            menu_type_id: 1,
+            category: 'Pork',
+            menu_type: { id: 1, name: 'Main Course', menus: [] },
+            createdAt: '2024-03-20'
+        }
+    },
+    {
+        id: 2,
+        package_id: 1,
+        menu_id: 2,
+        is_fixed: false,
+        can_change: true,
+        menu: {
+            id: 2,
+            name: 'GARLIC CHICKEN',
+            description: 'Savory garlic chicken',
+            price: 0,
+            is_available: true,
+            menu_type_id: 1,
+            category: 'Chicken',
+            menu_type: { id: 1, name: 'Main Course', menus: [] },
+            createdAt: '2024-03-20'
+        }
+    },
+    // Beef Tray menus
+    {
+        id: 3,
+        package_id: 3,
+        menu_id: 3,
+        is_fixed: false,
+        can_change: true,
+        price: 1100,
+        menu: {
+            id: 3,
+            name: 'BEEF CALDERETA',
+            description: 'Traditional Filipino beef stew',
+            price: 1100,
+            is_available: true,
+            menu_type_id: 1,
+            category: 'Beef',
+            menu_type: { id: 1, name: 'Main Course', menus: [] },
+            createdAt: '2024-03-20'
+        }
+    },
+]);
+
+// Add-ons management states
+const selectedAddonCategory = ref<number | null>(null);
+const addonSearchQuery = ref('');
+const showCreateAddonDialog = ref(false);
+const showEditAddonDialog = ref(false);
+const showDeleteAddonDialog = ref(false);
+const showMenuSelectionDialog = ref(false);
+const editingAddonPackage = ref<AddonPackage | null>(null);
+const selectedMenusForPackage = ref<Set<number>>(new Set());
+
+const filteredAddonPackages = computed(() => {
+    let packages = addonPackages.value;
+
+    if (selectedAddonCategory.value) {
+        packages = packages.filter(p => p.category_id === selectedAddonCategory.value);
+    }
+
+    if (addonSearchQuery.value) {
+        const query = addonSearchQuery.value.toLowerCase();
+        packages = packages.filter(p =>
+            p.name.toLowerCase().includes(query) ||
+            p.description?.toLowerCase().includes(query)
+        );
+    }
+
+    return packages;
+});
+
+const getPackageMenus = (packageId: number) => {
+    return addonPackageMenus.value.filter(pm => pm.package_id === packageId);
+};
+
+const getCategoryName = (categoryId: number) => {
+    return addonCategories.value.find(c => c.id === categoryId)?.name || '';
+};
+
+// Add this computed property after the other computed properties
+const getPackageCount = (categoryId: number) => {
+    return addonPackages.value.filter(p => p.category_id === categoryId).length;
+};
+
 // Fetch data on component mount
 onMounted(() => {
     router.get('/catering', {}, {
@@ -737,6 +937,113 @@ onMounted(() => {
     });
 });
 
+// Add these methods after the existing methods
+const addMenuItemsToPackage = () => {
+    if (editingAddonPackage.value) {
+        selectedMenusForPackage.value.forEach(menuId => {
+            const menu = menus.value.find(m => m.id === menuId);
+            if (menu) {
+                addonPackageMenus.value.push({
+                    id: Math.max(...addonPackageMenus.value.map(pm => pm.id)) + 1,
+                    package_id: editingAddonPackage.value!.id,
+                    menu_id: menu.id,
+                    is_fixed: false,
+                    can_change: true,
+                    price: menu.price,
+                    quantity: menu.quantity || 1,
+                    menu: menu
+                });
+            }
+        });
+        showMenuSelectionDialog.value = false;
+        selectedMenusForPackage.value.clear();
+    }
+};
+
+const saveAddonPackage = () => {
+    if (editingAddonPackage.value) {
+        const index = addonPackages.value.findIndex(p => p.id === editingAddonPackage.value?.id);
+        if (index !== -1) {
+            addonPackages.value[index] = { ...editingAddonPackage.value };
+        }
+        showEditAddonDialog.value = false;
+        editingAddonPackage.value = null;
+    }
+};
+
+const deleteAddonPackage = () => {
+    if (editingAddonPackage.value) {
+        // Remove the package
+        const index = addonPackages.value.findIndex(p => p.id === editingAddonPackage.value?.id);
+        if (index !== -1) {
+            addonPackages.value.splice(index, 1);
+        }
+
+        // Remove associated menu items
+        addonPackageMenus.value = addonPackageMenus.value.filter(
+            pm => pm.package_id !== editingAddonPackage.value?.id
+        );
+
+        showDeleteAddonDialog.value = false;
+        editingAddonPackage.value = null;
+    }
+};
+
+const addonDescription = computed(() => {
+    return selectedAddonCategory.value
+        ? 'View and manage packages in this category'
+        : 'Browse all available packages'
+})
+
+// Add after the stats ref
+const upcomingEvents = ref([
+    {
+        id: 1,
+        title: 'Wedding Reception',
+        date: '2024-04-15',
+        time: '6:00 PM',
+        guests: 150,
+        package: 'Premium Package'
+    },
+    {
+        id: 2,
+        title: 'Corporate Event',
+        date: '2024-04-20',
+        time: '12:00 PM',
+        guests: 75,
+        package: 'Business Package'
+    }
+]);
+
+const recentOrders = ref([
+    {
+        id: 'ORD-001',
+        date: '2024-03-28',
+        status: 'pending',
+        items: 5,
+        total: 25000
+    },
+    {
+        id: 'ORD-002',
+        date: '2024-03-27',
+        status: 'completed',
+        items: 3,
+        total: 15000
+    }
+]);
+
+const importantNotes = ref([
+    {
+        id: 1,
+        title: 'Inventory Alert',
+        description: 'Low stock on premium ingredients'
+    },
+    {
+        id: 2,
+        title: 'Staff Schedule',
+        description: 'Additional staff needed for upcoming events'
+    }
+]);
 </script>
 
 <template>
@@ -797,165 +1104,81 @@ onMounted(() => {
 
                 <!-- Overview Tab -->
                 <TabsContent value="overview" class="mt-6">
-                    <!-- Quick Stats -->
-                    <div class="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-                        <Card
-                            class="relative overflow-hidden border-none bg-gradient-to-br from-primary/10 to-primary/5 transition-all duration-300 hover:shadow-lg hover:scale-[1.02] group">
-                            <div
-                                class="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
-                            </div>
-                            <div class="absolute right-4 top-4 opacity-10 pointer-events-none">
-                                <Package class="h-20 w-20 text-primary" />
-                            </div>
-                            <CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2 relative z-10">
-                                <CardTitle class="text-sm font-medium text-primary">Total Packages</CardTitle>
-                            </CardHeader>
-                            <CardContent class="relative z-10">
-                                <div class="text-3xl font-bold">{{ stats.totalPackages }}</div>
-                                <div class="flex items-center gap-1 text-sm text-muted-foreground">
-                                    <TrendingUp class="h-4 w-4 text-green-500" />
-                                    <span>{{ stats.trends.packages }}</span>
-                                </div>
-                                <div class="mt-4 flex items-center justify-between">
-                                    <p class="text-xs text-muted-foreground">Available packages</p>
-                                    <Link href="/catering/packages"
-                                        class="text-xs text-primary hover:underline flex items-center gap-1 transition-colors duration-200">
-                                    View Details
-                                    <ChevronRight
-                                        class="h-3 w-3 transition-transform duration-200 group-hover:translate-x-1" />
-                                    </Link>
-                                </div>
-                            </CardContent>
-                        </Card>
-
-                        <Card
-                            class="relative overflow-hidden border-none bg-gradient-to-br from-green-500/10 to-green-500/5 transition-all duration-300 hover:shadow-lg hover:scale-[1.02] group">
-                            <div
-                                class="absolute inset-0 bg-gradient-to-br from-green-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
-                            </div>
-                            <div class="absolute right-4 top-4 opacity-10 pointer-events-none">
-                                <Utensils class="h-20 w-20 text-green-500" />
-                            </div>
-                            <CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2 relative z-10">
-                                <CardTitle class="text-sm font-medium text-green-500">Menu Items</CardTitle>
-                            </CardHeader>
-                            <CardContent class="relative z-10">
-                                <div class="text-3xl font-bold">{{ stats.totalMenuItems }}</div>
-                                <div class="flex items-center gap-1 text-sm text-muted-foreground">
-                                    <TrendingUp class="h-4 w-4 text-green-500" />
-                                    <span>{{ stats.trends.menuItems }}</span>
-                                </div>
-                                <div class="mt-4 flex items-center justify-between">
-                                    <p class="text-xs text-muted-foreground">Total menu items</p>
-                                    <Link href="/catering/menu"
-                                        class="text-xs text-green-500 hover:underline flex items-center gap-1 transition-colors duration-200">
-                                    View Details
-                                    <ChevronRight
-                                        class="h-3 w-3 transition-transform duration-200 group-hover:translate-x-1" />
-                                    </Link>
-                                </div>
-                            </CardContent>
-                        </Card>
-
-                        <Card
-                            class="relative overflow-hidden border-none bg-gradient-to-br from-blue-500/10 to-blue-500/5 transition-all duration-300 hover:shadow-lg hover:scale-[1.02] group">
-                            <div
-                                class="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
-                            </div>
-                            <div class="absolute right-4 top-4 opacity-10 pointer-events-none">
-                                <DollarSign class="h-20 w-20 text-blue-500" />
-                            </div>
-                            <CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2 relative z-10">
-                                <CardTitle class="text-sm font-medium text-blue-500">Catering Revenue</CardTitle>
-                            </CardHeader>
-                            <CardContent class="relative z-10">
-                                <div class="text-3xl font-bold">₱{{ stats.totalRevenue.toLocaleString() }}</div>
-                                <div class="flex items-center gap-1 text-sm text-muted-foreground">
-                                    <TrendingUp class="h-4 w-4 text-green-500" />
-                                    <span>{{ stats.trends.revenue }}</span>
-                                </div>
-                                <div class="mt-4 flex items-center justify-between">
-                                    <p class="text-xs text-muted-foreground">This month</p>
-                                    <Link href="/catering/revenue"
-                                        class="text-xs text-blue-500 hover:underline flex items-center gap-1 transition-colors duration-200">
-                                    View Details
-                                    <ChevronRight
-                                        class="h-3 w-3 transition-transform duration-200 group-hover:translate-x-1" />
-                                    </Link>
-                                </div>
-                            </CardContent>
-                        </Card>
-
-                        <Card
-                            class="relative overflow-hidden border-none bg-gradient-to-br from-purple-500/10 to-purple-500/5 transition-all duration-300 hover:shadow-lg hover:scale-[1.02] group">
-                            <div
-                                class="absolute inset-0 bg-gradient-to-br from-purple-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
-                            </div>
-                            <div class="absolute right-4 top-4 opacity-10 pointer-events-none">
-                                <Calendar class="h-20 w-20 text-purple-500" />
-                            </div>
-                            <CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2 relative z-10">
-                                <CardTitle class="text-sm font-medium text-purple-500">Upcoming Events</CardTitle>
-                            </CardHeader>
-                            <CardContent class="relative z-10">
-                                <div class="text-3xl font-bold">{{ stats.upcomingEvents }}</div>
-                                <div class="flex items-center gap-1 text-sm text-muted-foreground">
-                                    <TrendingUp class="h-4 w-4 text-green-500" />
-                                    <span>{{ stats.trends.events }}</span>
-                                </div>
-                                <div class="mt-4 flex items-center justify-between">
-                                    <p class="text-xs text-muted-foreground">Next 30 days</p>
-                                    <Link href="/catering/events"
-                                        class="text-xs text-purple-500 hover:underline flex items-center gap-1 transition-colors duration-200">
-                                    View Details
-                                    <ChevronRight
-                                        class="h-3 w-3 transition-transform duration-200 group-hover:translate-x-1" />
-                                    </Link>
-                                </div>
-                            </CardContent>
-                        </Card>
-                    </div>
-
-                    <!-- Quick Actions -->
-                    <div class="grid gap-6 lg:grid-cols-2 mt-6">
-                        <Card class="transition-all duration-300 hover:shadow-lg">
-                            <CardHeader class="flex flex-row items-center justify-between">
-                                <CardTitle>Quick Actions</CardTitle>
+                    <!-- Main Overview Grid -->
+                    <div class="grid gap-6 lg:grid-cols-3">
+                        <!-- Upcoming Events -->
+                        <Card class="lg:col-span-2">
+                            <CardHeader>
+                                <CardTitle class="flex items-center gap-2">
+                                    <Calendar class="h-5 w-5 text-primary" />
+                                    Upcoming Events
+                                </CardTitle>
                             </CardHeader>
                             <CardContent>
-                                <div class="grid gap-2">
+                                <div class="space-y-4">
+                                    <div v-for="event in upcomingEvents" :key="event.id"
+                                        class="flex items-center justify-between p-4 rounded-lg border hover:bg-muted/50 transition-colors">
+                                        <div class="space-y-1">
+                                            <h4 class="font-medium">{{ event.title }}</h4>
+                                            <p class="text-sm text-muted-foreground">{{ event.date }} at {{ event.time
+                                                }}</p>
+                                            <div class="flex items-center gap-2 text-sm">
+                                                <Badge variant="outline">{{ event.guests }} guests</Badge>
+                                                <Badge variant="outline">{{ event.package }}</Badge>
+                                            </div>
+                                        </div>
+                                        <Button variant="ghost" size="sm" class="gap-2">
+                                            View Details
+                                            <ChevronRight class="h-4 w-4" />
+                                        </Button>
+                                    </div>
+                                </div>
+                            </CardContent>
+                        </Card>
+
+                        <!-- Quick Actions -->
+                        <Card>
+                            <CardHeader>
+                                <CardTitle class="flex items-center gap-2">
+                                    <Settings class="h-5 w-5 text-primary" />
+                                    Quick Actions
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                                <div class="space-y-2">
                                     <Button variant="outline" class="w-full justify-start h-auto py-2.5" asChild>
-                                        <Link href="/catering/packages/new" class="flex w-full items-center gap-3">
+                                        <Link href="/catering/events/new" class="flex w-full items-center gap-3">
                                         <div class="rounded-full bg-primary/10 p-2">
-                                            <Package class="h-4 w-4 text-primary" />
+                                            <Calendar class="h-4 w-4 text-primary" />
                                         </div>
                                         <div class="flex flex-col items-start">
-                                            <span class="font-medium">Add New Package</span>
-                                            <span class="text-xs text-muted-foreground">Create a new catering
-                                                package</span>
+                                            <span class="font-medium">New Event</span>
+                                            <span class="text-xs text-muted-foreground">Schedule a new catering
+                                                event</span>
                                         </div>
                                         </Link>
                                     </Button>
                                     <Button variant="outline" class="w-full justify-start h-auto py-2.5" asChild>
-                                        <Link href="/catering/menu/new" class="flex w-full items-center gap-3">
+                                        <Link href="/catering/orders/new" class="flex w-full items-center gap-3">
                                         <div class="rounded-full bg-green-500/10 p-2">
                                             <Utensils class="h-4 w-4 text-green-500" />
                                         </div>
                                         <div class="flex flex-col items-start">
-                                            <span class="font-medium">Add Menu Item</span>
-                                            <span class="text-xs text-muted-foreground">Add a new menu item</span>
+                                            <span class="font-medium">New Order</span>
+                                            <span class="text-xs text-muted-foreground">Create a new catering
+                                                order</span>
                                         </div>
                                         </Link>
                                     </Button>
                                     <Button variant="outline" class="w-full justify-start h-auto py-2.5" asChild>
-                                        <Link href="/catering/events" class="flex w-full items-center gap-3">
-                                        <div class="rounded-full bg-purple-500/10 p-2">
-                                            <Calendar class="h-4 w-4 text-purple-500" />
+                                        <Link href="/catering/menu" class="flex w-full items-center gap-3">
+                                        <div class="rounded-full bg-blue-500/10 p-2">
+                                            <Package class="h-4 w-4 text-blue-500" />
                                         </div>
                                         <div class="flex flex-col items-start">
-                                            <span class="font-medium">View Upcoming Events</span>
-                                            <span class="text-xs text-muted-foreground">Check your upcoming catering
-                                                events</span>
+                                            <span class="font-medium">Manage Menu</span>
+                                            <span class="text-xs text-muted-foreground">Update menu items and
+                                                packages</span>
                                         </div>
                                         </Link>
                                     </Button>
@@ -963,36 +1186,62 @@ onMounted(() => {
                             </CardContent>
                         </Card>
 
-                        <Card class="transition-all duration-300 hover:shadow-lg">
-                            <CardHeader class="flex flex-row items-center justify-between">
-                                <CardTitle>Management Tools</CardTitle>
+                        <!-- Recent Orders -->
+                        <Card class="lg:col-span-2">
+                            <CardHeader>
+                                <CardTitle class="flex items-center gap-2">
+                                    <Utensils class="h-5 w-5 text-primary" />
+                                    Recent Orders
+                                </CardTitle>
                             </CardHeader>
                             <CardContent>
-                                <div class="grid gap-2">
-                                    <Button variant="outline" class="w-full justify-start h-auto py-2.5" asChild>
-                                        <Link href="/catering/settings" class="flex w-full items-center gap-3">
-                                        <div class="rounded-full bg-blue-500/10 p-2">
-                                            <Settings class="h-4 w-4 text-blue-500" />
+                                <div class="space-y-4">
+                                    <div v-for="order in recentOrders" :key="order.id"
+                                        class="flex items-center justify-between p-4 rounded-lg border hover:bg-muted/50 transition-colors">
+                                        <div class="space-y-1">
+                                            <h4 class="font-medium">Order #{{ order.id }}</h4>
+                                            <p class="text-sm text-muted-foreground">{{ order.date }}</p>
+                                            <div class="flex items-center gap-2 text-sm">
+                                                <Badge :variant="order.status === 'pending' ? 'secondary' : 'default'">
+                                                    {{ order.status }}
+                                                </Badge>
+                                                <span class="text-muted-foreground">{{ order.items }} items</span>
+                                            </div>
                                         </div>
-                                        <div class="flex flex-col items-start">
-                                            <span class="font-medium">Catering Settings</span>
-                                            <span class="text-xs text-muted-foreground">Configure your catering
-                                                preferences</span>
+                                        <div class="text-right">
+                                            <p class="font-medium">₱{{ order.total.toLocaleString() }}</p>
+                                            <Button variant="ghost" size="sm" class="gap-2">
+                                                View Details
+                                                <ChevronRight class="h-4 w-4" />
+                                            </Button>
                                         </div>
-                                        </Link>
-                                    </Button>
-                                    <Button variant="outline" class="w-full justify-start h-auto py-2.5" asChild>
-                                        <Link href="/dashboard" class="flex w-full items-center gap-3">
-                                        <div class="rounded-full bg-primary/10 p-2">
-                                            <BarChart class="h-4 w-4 text-primary" />
+                                    </div>
+                                </div>
+                            </CardContent>
+                        </Card>
+
+                        <!-- Important Notes -->
+                        <Card>
+                            <CardHeader>
+                                <CardTitle class="flex items-center gap-2">
+                                    <AlertTriangle class="h-5 w-5 text-primary" />
+                                    Important Notes
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                                <div class="space-y-4">
+                                    <div v-for="note in importantNotes" :key="note.id"
+                                        class="p-4 rounded-lg border hover:bg-muted/50 transition-colors">
+                                        <div class="flex items-start gap-3">
+                                            <div class="rounded-full bg-yellow-500/10 p-2">
+                                                <AlertTriangle class="h-4 w-4 text-yellow-500" />
+                                            </div>
+                                            <div>
+                                                <h4 class="font-medium">{{ note.title }}</h4>
+                                                <p class="text-sm text-muted-foreground">{{ note.description }}</p>
+                                            </div>
                                         </div>
-                                        <div class="flex flex-col items-start">
-                                            <span class="font-medium">View Full Reports</span>
-                                            <span class="text-xs text-muted-foreground">Access detailed analytics and
-                                                reports</span>
-                                        </div>
-                                        </Link>
-                                    </Button>
+                                    </div>
                                 </div>
                             </CardContent>
                         </Card>
@@ -1741,9 +1990,332 @@ onMounted(() => {
                         </Dialog>
                     </div>
                 </TabsContent>
+
+                <!-- Add-Ons Tab Content -->
+                <TabsContent value="add-ons" class="mt-6">
+                    <div class="flex h-full flex-1 flex-col gap-12 rounded-xl px-6 py-8 max-w-7xl mx-auto">
+                        <!-- Header -->
+                        <div class="text-center">
+                            <h1 class="text-4xl font-bold text-gray-900 mb-2">Add-Ons</h1>
+                            <p class="text-lg text-muted-foreground">Manage special packages and food trays</p>
+                        </div>
+
+                        <!-- Categories Section -->
+                        <div class="space-y-6">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <h2 class="text-2xl font-semibold tracking-tight">Categories</h2>
+                                    <p class="text-muted-foreground">Select a category to view its packages</p>
+                                </div>
+                                <Button variant="outline" class="gap-2">
+                                    <Plus class="h-4 w-4" />
+                                    Add Category
+                                </Button>
+                            </div>
+
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <Card v-for="category in addonCategories" :key="category.id"
+                                    class="cursor-pointer transition-all duration-300 hover:shadow-lg group relative overflow-hidden"
+                                    :class="{ 'ring-2 ring-primary': selectedAddonCategory === category.id }"
+                                    @click="selectedAddonCategory = selectedAddonCategory === category.id ? null : category.id">
+                                    <!-- Background Pattern -->
+                                    <div
+                                        class="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                                    </div>
+
+                                    <CardHeader>
+                                        <CardTitle class="flex items-center justify-between">
+                                            <div class="flex items-center gap-2">
+                                                <div class="rounded-full bg-primary/10 p-2">
+                                                    <Package class="h-5 w-5 text-primary" />
+                                                </div>
+                                                {{ category.name }}
+                                            </div>
+                                            <Badge :variant="category.status === 'active' ? 'default' : 'secondary'"
+                                                class="transition-colors duration-200 group-hover:bg-primary/10">
+                                                {{ category.status }}
+                                            </Badge>
+                                        </CardTitle>
+                                    </CardHeader>
+                                    <CardContent>
+                                        <p class="text-muted-foreground">{{ category.description }}</p>
+                                        <div class="mt-4 flex items-center justify-between text-sm">
+                                            <div class="flex items-center gap-2">
+                                                <div class="rounded-full bg-muted p-1.5">
+                                                    <Utensils class="h-4 w-4 text-muted-foreground" />
+                                                </div>
+                                                <span class="text-muted-foreground">
+                                                    {{ getPackageCount(category.id) }} packages
+                                                </span>
+                                            </div>
+                                            <Button variant="ghost" size="sm" class="gap-2">
+                                                View Details
+                                                <ChevronRight class="h-4 w-4" />
+                                            </Button>
+                                        </div>
+                                    </CardContent>
+                                </Card>
+                            </div>
+                        </div>
+
+                        <!-- Divider -->
+                        <!-- <div class="relative">
+                            <div class="absolute inset-0 flex items-center" aria-hidden="true">
+                                <div class="w-full border-t border-muted"></div>
+                            </div>
+                            <div class="relative flex justify-center">
+                                <span class="bg-background px-4 text-sm text-muted-foreground">Packages</span>
+                            </div>
+                        </div> -->
+
+                        <!-- Packages Section -->
+                        <div class="space-y-6 mt-8">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <h2 class="text-2xl font-semibold tracking-tight">
+                                        {{ selectedAddonCategory ? getCategoryName(selectedAddonCategory) : 'All' }}
+                                        Packages
+                                    </h2>
+                                    <p class="text-muted-foreground">
+                                        {{ addonDescription }}
+                                    </p>
+                                </div>
+                                <Button @click="showCreateAddonDialog = true" class="gap-2">
+                                    <Plus class="h-4 w-4" />
+                                    Add Package
+                                </Button>
+                            </div>
+
+                            <!-- Search and Filters -->
+                            <div class="flex items-center gap-4">
+                                <div class="relative flex-1 max-w-sm">
+                                    <Search
+                                        class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                                    <Input v-model="addonSearchQuery" placeholder="Search packages..." class="pl-9" />
+                                </div>
+                                <Button variant="outline" size="icon" @click="addonSearchQuery = ''"
+                                    v-if="addonSearchQuery">
+                                    <X class="h-4 w-4" />
+                                </Button>
+                            </div>
+
+                            <!-- Packages Grid -->
+                            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                <Card v-for="pkg in filteredAddonPackages" :key="pkg.id"
+                                    class="group relative overflow-hidden hover:shadow-lg transition-all duration-300">
+                                    <!-- Package Image -->
+                                    <div class="relative h-48 overflow-hidden">
+                                        <img :src="pkg.image_url || 'default-image-url'" :alt="pkg.name"
+                                            class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" />
+                                        <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                                        <Badge class="absolute top-4 right-4"
+                                            :variant="pkg.status === 'active' ? 'default' : 'secondary'">
+                                            {{ pkg.status }}
+                                        </Badge>
+                                    </div>
+
+                                    <CardHeader class="relative z-10">
+                                        <CardTitle class="flex items-center justify-between">
+                                            <div class="flex items-center gap-2">
+                                                <div class="rounded-full bg-primary/10 p-2">
+                                                    <Package class="h-4 w-4 text-primary" />
+                                                </div>
+                                                {{ pkg.name }}
+                                            </div>
+                                            <Badge variant="outline" class="bg-background/80 backdrop-blur-sm">
+                                                {{ getCategoryName(pkg.category_id) }}
+                                            </Badge>
+                                        </CardTitle>
+                                    </CardHeader>
+
+                                    <CardContent class="space-y-4">
+                                        <p class="text-muted-foreground">{{ pkg.description }}</p>
+
+                                        <!-- Package Details -->
+                                        <div class="space-y-2">
+                                            <div class="flex items-center justify-between text-sm">
+                                                <span class="text-muted-foreground">Serving Size</span>
+                                                <span class="font-medium">{{ pkg.serving_size }} pax</span>
+                                            </div>
+                                            <div class="flex items-center justify-between text-sm" v-if="pkg.price">
+                                                <span class="text-muted-foreground">Price</span>
+                                                <span class="font-medium">₱{{ pkg.price.toLocaleString() }}</span>
+                                            </div>
+                                        </div>
+
+                                        <!-- Menu Items -->
+                                        <div class="space-y-2">
+                                            <h4 class="text-sm font-medium flex items-center gap-2">
+                                                <div class="rounded-full bg-muted p-1.5">
+                                                    <Utensils class="h-4 w-4 text-muted-foreground" />
+                                                </div>
+                                                Included Items
+                                            </h4>
+                                            <div class="space-y-1">
+                                                <div v-for="packageMenu in getPackageMenus(pkg.id)"
+                                                    :key="packageMenu.id"
+                                                    class="flex items-center justify-between text-sm">
+                                                    <div class="flex items-center gap-2">
+                                                        <Badge variant="outline" :class="{
+                                                            'border-primary text-primary': packageMenu.is_fixed,
+                                                            'border-muted text-muted-foreground': !packageMenu.is_fixed
+                                                        }">
+                                                            {{ packageMenu.is_fixed ? 'Fixed' : 'Changeable' }}
+                                                        </Badge>
+                                                        <span>{{ packageMenu.menu?.name }}</span>
+                                                    </div>
+                                                    <div class="flex items-center gap-2">
+                                                        <span v-if="packageMenu.quantity" class="text-muted-foreground">
+                                                            x{{ packageMenu.quantity }}
+                                                        </span>
+                                                        <span v-if="packageMenu.price" class="font-medium">
+                                                            ₱{{ packageMenu.price.toLocaleString() }}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </CardContent>
+
+                                    <!-- Action Buttons -->
+                                    <div
+                                        class="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                                        <div class="flex items-center gap-1">
+                                            <Button variant="outline" size="icon" class="bg-white/90 hover:bg-white"
+                                                @click="showMenuSelectionDialog = true; editingAddonPackage = pkg">
+                                                <Plus class="h-4 w-4" />
+                                            </Button>
+                                            <Button variant="outline" size="icon" class="bg-white/90 hover:bg-white"
+                                                @click="showEditAddonDialog = true; editingAddonPackage = pkg">
+                                                <Edit2 class="h-4 w-4" />
+                                            </Button>
+                                            <Button variant="outline" size="icon"
+                                                class="bg-white/90 hover:bg-white text-destructive hover:text-destructive"
+                                                @click="showDeleteAddonDialog = true; editingAddonPackage = pkg">
+                                                <Trash2 class="h-4 w-4" />
+                                            </Button>
+                                        </div>
+                                    </div>
+                                </Card>
+                            </div>
+                        </div>
+                    </div>
+                </TabsContent>
             </Tabs>
         </div>
     </AppLayout>
+
+    <!-- Add Menu Items Dialog -->
+    <Dialog v-model:open="showMenuSelectionDialog">
+        <DialogContent class="max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+                <DialogTitle>Add Menu Items</DialogTitle>
+                <DialogDescription>
+                    Add menu items to {{ editingAddonPackage?.name }}
+                </DialogDescription>
+            </DialogHeader>
+            <div class="space-y-4 py-4">
+                <div class="space-y-2">
+                    <label class="text-sm font-medium">Select Menu Items</label>
+                    <div class="space-y-2">
+                        <div v-for="menu in menus" :key="menu.id"
+                            class="flex items-center justify-between p-2 border rounded-lg">
+                            <div class="flex items-center gap-2">
+                                <Checkbox :checked="selectedMenusForPackage.has(menu.id)" @update:checked="(checked) => {
+                                    if (checked) selectedMenusForPackage.add(menu.id);
+                                    else selectedMenusForPackage.delete(menu.id);
+                                }" />
+                                <span>{{ menu.name }}</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <Input type="number" v-model="menu.quantity" min="1" class="w-20" placeholder="Qty" />
+                                <Input type="number" v-model="menu.price" min="0" class="w-32" placeholder="Price" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <DialogFooter>
+                <Button variant="outline" @click="showMenuSelectionDialog = false">Cancel</Button>
+                <Button @click="addMenuItemsToPackage">Add Items</Button>
+            </DialogFooter>
+        </DialogContent>
+    </Dialog>
+
+    <!-- Edit Package Dialog -->
+    <Dialog v-model:open="showEditAddonDialog">
+        <DialogContent class="max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+                <DialogTitle>Edit Package</DialogTitle>
+                <DialogDescription>
+                    Modify package details for {{ editingAddonPackage?.name }}
+                </DialogDescription>
+            </DialogHeader>
+            <div class="space-y-4 py-4" v-if="editingAddonPackage">
+                <div class="space-y-2">
+                    <label class="text-sm font-medium">Package Name</label>
+                    <Input v-model="editingAddonPackage.name" placeholder="Enter package name" />
+                </div>
+                <div class="space-y-2">
+                    <label class="text-sm font-medium">Description</label>
+                    <Input v-model="editingAddonPackage.description" placeholder="Enter description" />
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="space-y-2">
+                        <label class="text-sm font-medium">Serving Size</label>
+                        <Input v-model="editingAddonPackage.serving_size" type="number" min="1"
+                            placeholder="Enter serving size" />
+                    </div>
+                    <div class="space-y-2">
+                        <label class="text-sm font-medium">Price</label>
+                        <Input v-model="editingAddonPackage.price" type="number" min="0" placeholder="Enter price" />
+                    </div>
+                </div>
+                <div class="space-y-2">
+                    <label class="text-sm font-medium">Status</label>
+                    <Select v-model="editingAddonPackage.status">
+                        <SelectTrigger>
+                            <SelectValue placeholder="Select status" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="active">Active</SelectItem>
+                            <SelectItem value="inactive">Inactive</SelectItem>
+                        </SelectContent>
+                    </Select>
+                </div>
+                <div class="space-y-2">
+                    <label class="text-sm font-medium">Image URL</label>
+                    <div class="flex gap-2">
+                        <Input v-model="editingAddonPackage.image_url" placeholder="Enter image URL" />
+                        <Button variant="outline" size="icon"
+                            @click="() => editingAddonPackage?.image_url && previewPackageImage(editingAddonPackage?.image_url)">
+                            <Search class="h-4 w-4" />
+                        </Button>
+                    </div>
+                </div>
+            </div>
+            <DialogFooter>
+                <Button variant="outline" @click="showEditAddonDialog = false">Cancel</Button>
+                <Button @click="saveAddonPackage">Save Changes</Button>
+            </DialogFooter>
+        </DialogContent>
+    </Dialog>
+
+    <!-- Delete Package Dialog -->
+    <Dialog v-model:open="showDeleteAddonDialog">
+        <DialogContent>
+            <DialogHeader>
+                <DialogTitle>Delete Package</DialogTitle>
+                <DialogDescription>
+                    Are you sure you want to delete {{ editingAddonPackage?.name }}? This action cannot be undone.
+                </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+                <Button variant="outline" @click="showDeleteAddonDialog = false">Cancel</Button>
+                <Button variant="destructive" @click="deleteAddonPackage">Delete</Button>
+            </DialogFooter>
+        </DialogContent>
+    </Dialog>
 </template>
 
 <style scoped>

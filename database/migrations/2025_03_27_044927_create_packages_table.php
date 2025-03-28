@@ -22,23 +22,6 @@ return new class extends Migration
             $table->timestamps();
             $table->softDeletes();
         });
-
-        // Create inclusions table
-        Schema::create('inclusions', function (Blueprint $table) {
-            $table->id();
-            $table->string('name')->unique();
-            $table->timestamps();
-        });
-
-        // Create pivot table
-        Schema::create('inclusion_package', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('package_id')->constrained()->onDelete('cascade');
-            $table->foreignId('inclusion_id')->constrained()->onDelete('cascade');
-            $table->timestamps();
-
-            $table->unique(['package_id', 'inclusion_id']);
-        });
     }
 
     /**
@@ -46,8 +29,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('inclusion_package');
-        Schema::dropIfExists('inclusions');
         Schema::dropIfExists('packages');
     }
 };
