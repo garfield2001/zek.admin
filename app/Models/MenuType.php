@@ -16,26 +16,26 @@ class MenuType extends Model
     ];
 
     /**
-     * Get the dishes of this menu type.
+     * Get the menus of this menu type.
      */
-    public function dishes()
+    public function menus()
     {
-        return $this->hasMany(Dish::class);
+        return $this->hasMany(Menu::class);
     }
 
     /**
-     * Get only available dishes of this menu type.
+     * Get only available menus of this menu type.
      */
-    public function availableDishes()
+    public function availableMenus()
     {
-        return $this->hasMany(Dish::class)->where('is_available', true);
+        return $this->hasMany(Menu::class)->where('is_available', true);
     }
 
     /**
-     * Get the count of available dishes in this menu type.
+     * Get the count of available menus in this menu type.
      */
-    public function getAvailableDishesCountAttribute()
+    public function getAvailableMenusCountAttribute()
     {
-        return $this->dishes()->where('is_available', true)->count();
+        return $this->menus()->where('is_available', true)->count();
     }
 }

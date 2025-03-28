@@ -18,24 +18,6 @@ class PackageSeeder extends Seeder
     {
         $now = Carbon::now();
 
-        // Create standard inclusions first
-        $standardInclusions = [
-            [
-                'name' => 'Rice',
-                'created_at' => $now,
-                'updated_at' => $now,
-            ],
-            [
-                'name' => 'Drinks',
-                'created_at' => $now,
-                'updated_at' => $now,
-            ],
-        ];
-
-        // Create inclusions and store their IDs
-        $inclusionIds = collect($standardInclusions)->map(function ($inclusion) {
-            return Inclusion::create($inclusion)->id;
-        });
 
         $packages = [
             [
@@ -80,21 +62,9 @@ class PackageSeeder extends Seeder
             ],
         ];
 
-        DB::transaction(function () use ($packages, $inclusionIds) {
-            foreach ($packages as $packageData) {
-                try {
-                    $package = Package::create($packageData);
 
-                    if (!$package) {
-                        throw new \Exception("Failed to create package: {$packageData['name']}");
-                    }
-
-                    // Attach all standard inclusions to the package
-                    $package->inclusions()->attach($inclusionIds);
-                } catch (\Exception $e) {
-                    throw new \Exception("Error seeding package {$packageData['name']}: " . $e->getMessage());
-                }
-            }
-        });
+        foreach ($packages as $packageData) {
+            Package::create($packageData);
+        };
     }
 }

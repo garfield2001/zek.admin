@@ -2,12 +2,12 @@
 
 namespace Database\Seeders;
 
-use App\Models\Dish;
+use App\Models\Menu;
 use App\Models\MenuType;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Carbon;
 
-class DishSeeder extends Seeder
+class MenuSeeder extends Seeder
 {
     /**
      * Run the database seeds.
@@ -33,8 +33,8 @@ class DishSeeder extends Seeder
 
         $now = Carbon::now();
 
-        // Beef Dishes
-        $beefDishes = [
+        // Beef Menus
+        $beefMenus = [
             [
                 'name' => 'BEEF STEAK TAGALOG',
                 'description' => 'Filipino-style beef steak with onions in soy-calamansi sauce',
@@ -93,8 +93,8 @@ class DishSeeder extends Seeder
             ],
         ];
 
-        // Pork Dishes
-        $porkDishes = [
+        // Pork Menus
+        $porkMenus = [
             [
                 'name' => 'PORK MENUDO',
                 'description' => 'Diced pork with liver and vegetables in tomato sauce',
@@ -145,8 +145,8 @@ class DishSeeder extends Seeder
             ],
         ];
 
-        // Chicken Dishes
-        $chickenDishes = [
+        // Chicken Menus
+        $chickenMenus = [
             [
                 'name' => 'CHICKEN AFRITADA',
                 'description' => 'Chicken stewed in tomato sauce with vegetables',
@@ -221,8 +221,8 @@ class DishSeeder extends Seeder
             ],
         ];
 
-        // Fish & Seafoods Dishes
-        $fishAndSeafoodDishes = [
+        // Fish & Seafoods Menus
+        $fishAndSeafoodMenus = [
             [
                 'name' => 'MIXED SEAFOODS',
                 'description' => 'Assorted seafood in garlic butter sauce',
@@ -265,8 +265,8 @@ class DishSeeder extends Seeder
             ],
         ];
 
-        // Vegetables Dishes
-        $vegetableDishes = [
+        // Vegetables Menus
+        $vegetableMenus = [
             [
                 'name' => 'CHOPSUEY WITH QUAIL EGG',
                 'description' => 'Mixed vegetables with quail eggs in oyster sauce',
@@ -309,8 +309,8 @@ class DishSeeder extends Seeder
             ],
         ];
 
-        // Pasta Dishes
-        $pastaDishes = [
+        // Pasta Menus
+        $pastaMenus = [
             [
                 'name' => 'SPAGHETTI WITH BECHAMEL SAUCE',
                 'description' => 'Creamy white sauce pasta with mushrooms',
@@ -361,8 +361,8 @@ class DishSeeder extends Seeder
             ],
         ];
 
-        // Noodles Dishes
-        $noodlesDishes = [
+        // Noodles Menus
+        $noodlesMenus = [
             [
                 'name' => 'SOTANGHON GUISADO',
                 'description' => 'Stir-fried glass noodles with vegetables',
@@ -389,8 +389,8 @@ class DishSeeder extends Seeder
             ],
         ];
 
-        // Dessert Dishes
-        $dessertDishes = [
+        // Dessert Menus
+        $dessertMenus = [
             [
                 'name' => 'FRESH MIX FRUITS',
                 'description' => 'Assorted seasonal fresh fruits',
@@ -433,23 +433,23 @@ class DishSeeder extends Seeder
             ],
         ];
 
-        // Create dishes for each type
-        $dishTypes = [
-            [$beefType->id, $beefDishes],
-            [$porkType->id, $porkDishes],
-            [$chickenType->id, $chickenDishes],
-            [$fishAndSeafoodType->id, $fishAndSeafoodDishes],
-            [$vegetableType->id, $vegetableDishes],
-            [$pastaType->id, $pastaDishes],
-            [$noodlesType->id, $noodlesDishes],
-            [$dessertType->id, $dessertDishes],
+        // Create Menus for each type
+        $menuTypes = [
+            [$beefType->id, $beefMenus],
+            [$porkType->id, $porkMenus],
+            [$chickenType->id, $chickenMenus],
+            [$fishAndSeafoodType->id, $fishAndSeafoodMenus],
+            [$vegetableType->id, $vegetableMenus],
+            [$pastaType->id, $pastaMenus],
+            [$noodlesType->id, $noodlesMenus],
+            [$dessertType->id, $dessertMenus],
         ];
 
-        foreach ($dishTypes as [$typeId, $dishes]) {
-            foreach ($dishes as $dish) {
-                $dish['menu_type_id'] = $typeId;
-                $dish['is_available'] = true;
-                Dish::create($dish);
+        foreach ($menuTypes as [$typeId, $menus]) {
+            foreach ($menus as $menu) {
+                $menu['menu_type_id'] = $typeId;
+                $menu['is_available'] = true;
+                Menu::create($menu);
             }
         }
     }

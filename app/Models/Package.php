@@ -26,12 +26,4 @@ class Package extends Model
         'maximum_guests' => 'integer',
         'status' => 'string',
     ];
-
-    /**
-     * The inclusions that belong to this package.
-     */
-    public function inclusions()
-    {
-        return $this->belongsToMany(Inclusion::class);
-    }
 }

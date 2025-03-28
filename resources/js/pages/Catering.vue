@@ -5,6 +5,7 @@ import { Head } from '@inertiajs/vue3';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ref, onMounted, computed, h } from 'vue';
+import HeadingSmall from '@/components/HeadingSmall.vue';
 import {
     Tabs,
     TabsContent,
@@ -21,10 +22,43 @@ import {
 import { Link } from '@inertiajs/vue3';
 import { router } from '@inertiajs/vue3';
 import { toast } from 'sonner';
+import { Input } from '@/components/ui/input';
+import { Checkbox } from '@/components/ui/checkbox';
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from '@/components/ui/table';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog';
+import {
+    useVueTable,
+    getCoreRowModel,
+    getPaginationRowModel,
+    getFilteredRowModel,
+    getSortedRowModel,
+    type ColumnDef,
+    type FilterFn,
+} from '@tanstack/vue-table';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
+import { Badge } from '@/components/ui/badge';
 
 import Menus from './catering/Menus.vue';
-
-
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -52,40 +86,640 @@ interface MenuType {
     id: number;
     name: string;
     description?: string;
-    dishes: Dish[];
+    menus: Menu[];
 }
 
-interface Dish {
+interface Menu {
     id: number;
     name: string;
-    description: string;
+    description?: string;
     price: number;
     is_available: boolean;
     menu_type_id: number;
     menu_type: MenuType;
+    category: string;
+    image_url?: string;
+    createdAt: string;
+}
+
+interface Package {
+    id: number;
+    name: string;
+    description?: string;
+    price: number;
+    meal_limit: number;
+    minimum_guests: number;
+    maximum_guests: number;
+    status: 'active' | 'inactive';
+    inclusions: string[];
+    image_url?: string;
+    createdAt: string;
 }
 
 interface BackendData {
     initialPackages: any[];
     initialMenuTypes: MenuType[];
-    initialDishes: Dish[];
+    initialMenus: Menu[];
     initialMinimumPersons: number;
 }
 
 // Menu management data with proper typing
 const menuData = ref({
     menuTypes: [] as MenuType[],
-    dishes: [] as Dish[],
+    menus: [] as Menu[],
 });
 
 // Form data for modals
-const newDish = ref({
+const newMenu = ref<Partial<Menu>>({
+    id: 0,
     name: '',
     description: '',
     price: 0,
-    menu_type_id: '',
     is_available: true,
+    menu_type_id: 0,
+    category: '',
+    image_url: '',
+    createdAt: new Date().toISOString().split('T')[0]
 });
+
+// Add these after the existing data/refs
+const categories = ref<string[]>([
+    'Beef',
+    'Pork',
+    'Chicken',
+    'Seafood',
+    'Vegetables',
+    'Dessert'
+]);
+
+const newCategory = ref('');
+const showAddCategoryInput = ref(false);
+
+const menus = ref<Menu[]>([
+    {
+        id: 1,
+        name: 'BEEF STEAK TAGALOG',
+        category: 'Beef',
+        description: 'Classic Filipino beef steak',
+        image_url: 'https://images.unsplash.com/photo-1504674900247-0877df9cc836',
+        createdAt: '2024-03-20',
+        price: 250,
+        is_available: true,
+        menu_type_id: 1,
+        menu_type: {
+            id: 1,
+            name: 'Main Course',
+            menus: []
+        }
+    },
+    {
+        id: 2,
+        name: 'BEEF MENUDO',
+        category: 'Beef',
+        description: 'Traditional Filipino beef stew',
+        image_url: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd',
+        createdAt: '2024-03-20',
+        price: 200,
+        is_available: true,
+        menu_type_id: 1,
+        menu_type: {
+            id: 1,
+            name: 'Main Course',
+            menus: []
+        }
+    },
+    {
+        id: 3,
+        name: 'BEEF WITH BROCCOLI',
+        category: 'Beef',
+        description: 'Stir-fried beef with broccoli',
+        image_url: 'https://images.unsplash.com/photo-1467003909585-2f8a72700288',
+        createdAt: '2024-03-20',
+        price: 220,
+        is_available: true,
+        menu_type_id: 1,
+        menu_type: {
+            id: 1,
+            name: 'Main Course',
+            menus: []
+        }
+    }
+]);
+
+const selectedMenus = ref<Set<string>>(new Set<string>());
+const searchQuery = ref('');
+const selectedCategory = ref<string>('');
+const sorting = ref<{ id: string; desc: boolean }[]>([]);
+const pagination = ref({
+    pageIndex: 0,
+    pageSize: 10,
+});
+
+// Add these after the existing computed properties
+const categoryStats = computed(() => {
+    const stats = new Map<string, number>();
+    categories.value.forEach(category => {
+        stats.set(category, menus.value.filter(menu => menu.category === category).length);
+    });
+    return stats;
+});
+
+const addNewCategory = () => {
+    if (newCategory.value.trim() && !categories.value.includes(newCategory.value.trim())) {
+        categories.value.push(newCategory.value.trim());
+        newCategory.value = '';
+        showAddCategoryInput.value = false;
+    }
+};
+
+const fuzzyFilter: FilterFn<Menu> = (row, columnId, filterValue) => {
+    const searchValue = filterValue.toLowerCase();
+    const value = row.getValue(columnId);
+
+    if (selectedCategory.value && row.original.category !== selectedCategory.value) {
+        return false;
+    }
+
+    if (typeof value === 'string') {
+        return value.toLowerCase().includes(searchValue);
+    }
+    return false;
+};
+
+const columns: ColumnDef<Menu>[] = [
+    {
+        id: 'select',
+        header: ({ table }) => h('div', { class: 'px-1' }, [
+            h(Checkbox, {
+                checked: selectedMenus.value.size === table.getRowModel().rows.length,
+                'onUpdate:checked': (checked: boolean) => {
+                    if (checked) {
+                        table.getRowModel().rows.forEach(row => selectedMenus.value.add(row.original.name));
+                    } else {
+                        selectedMenus.value.clear();
+                    }
+                }
+            })
+        ]),
+        cell: ({ row }) => h('div', { class: 'px-1' }, [
+            h(Checkbox, {
+                checked: selectedMenus.value.has(row.original.name),
+                'onUpdate:checked': (checked: boolean) => {
+                    if (checked) {
+                        selectedMenus.value.add(row.original.name);
+                    } else {
+                        selectedMenus.value.delete(row.original.name);
+                    }
+                }
+            })
+        ]),
+        enableSorting: false,
+        enableHiding: false,
+        size: 50,
+    },
+    {
+        accessorKey: 'name',
+        header: 'Menu Name',
+        cell: ({ row }) => h('div', { class: 'font-medium' }, row.original.name),
+        size: 250,
+    },
+    {
+        accessorKey: 'category',
+        header: 'Category',
+        cell: ({ row }) => h(Badge, {
+            variant: 'secondary',
+            class: 'font-medium'
+        }, () => row.original.category),
+        size: 150,
+    },
+    {
+        accessorKey: 'description',
+        header: 'Description',
+        cell: ({ row }) => h('div', { class: 'text-muted-foreground' }, row.original.description || 'No description'),
+        size: 300,
+    },
+    {
+        accessorKey: 'createdAt',
+        header: 'Created At',
+        cell: ({ row }) => h('span', {}, new Date(row.original.createdAt).toLocaleDateString()),
+        size: 120,
+    },
+    {
+        accessorKey: 'image_url',
+        header: 'Image',
+        cell: ({ row }) => h('div', { class: 'flex items-center gap-2' }, [
+            row.original.image_url
+                ? [
+                    h('img', {
+                        src: row.original.image_url,
+                        class: 'h-12 w-12 object-cover rounded-md cursor-pointer hover:ring-2 hover:ring-primary transition-all',
+                        alt: row.original.name,
+                        onClick: () => previewMenuImage(row.original.image_url!)
+                    }),
+                    h(Search, {
+                        class: 'h-4 w-4 text-muted-foreground cursor-pointer hover:text-primary transition-colors',
+                        onClick: () => previewMenuImage(row.original.image_url!)
+                    })
+                ]
+                : h('div', {
+                    class: 'h-12 w-12 rounded-md bg-muted flex items-center justify-center'
+                }, [
+                    h(ImageIcon, { class: 'h-6 w-6 text-muted-foreground' })
+                ])
+        ]),
+        size: 120,
+    },
+    {
+        id: 'actions',
+        header: '',
+        cell: ({ row }) => h('div', { class: 'flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity' }, [
+            h(Button, {
+                variant: 'ghost',
+                size: 'icon',
+                onClick: () => startEditing(row.original)
+            }, () => h(Edit2, { class: 'h-4 w-4' })),
+            h(Button, {
+                variant: 'ghost',
+                size: 'icon',
+                class: 'text-destructive',
+                onClick: () => confirmDelete(row.original)
+            }, () => h(Trash2, { class: 'h-4 w-4' }))
+        ]),
+        enableSorting: false,
+        enableHiding: false,
+        size: 100,
+    },
+];
+
+const table = useVueTable({
+    data: menus,
+    columns,
+    getCoreRowModel: getCoreRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    state: {
+        sorting: sorting.value,
+        pagination: pagination.value,
+        globalFilter: searchQuery.value,
+    },
+    onSortingChange: (updater) => {
+        sorting.value = typeof updater === 'function' ? updater(sorting.value) : updater;
+    },
+    onPaginationChange: (updater) => {
+        pagination.value = typeof updater === 'function' ? updater(pagination.value) : updater;
+    },
+    onGlobalFilterChange: (updater) => {
+        searchQuery.value = typeof updater === 'function' ? updater(searchQuery.value) : updater;
+    },
+    globalFilterFn: fuzzyFilter,
+});
+
+const showCreateDialog = ref(false);
+const showEditDialog = ref(false);
+const showDeleteDialog = ref(false);
+const showImagePreview = ref(false);
+const previewImage = ref<string>('');
+const editingMenu = ref<Menu | null>(null);
+const menuToDelete = ref<Menu | null>(null);
+
+const validateImageUrl = (url: string) => {
+    try {
+        new URL(url);
+        return true;
+    } catch {
+        return false;
+    }
+};
+
+const previewMenuImage = (imageUrl: string) => {
+    if (imageUrl) {
+        previewImage.value = imageUrl;
+        showImagePreview.value = true;
+    }
+};
+
+const startEditing = (menu: Menu) => {
+    editingMenu.value = { ...menu };
+    showEditDialog.value = true;
+};
+
+const confirmDelete = (menu: Menu) => {
+    menuToDelete.value = menu;
+    showDeleteDialog.value = true;
+};
+
+const createMenu = () => {
+    if (newMenu.value.name && newMenu.value.category) {
+        const newId = Math.max(...menus.value.map(m => m.id)) + 1;
+        menus.value.push({
+            ...newMenu.value,
+            id: newId,
+            price: newMenu.value.price || 0,
+            is_available: true,
+            menu_type_id: 1,
+            menu_type: {
+                id: 1,
+                name: 'Main Course',
+                menus: []
+            },
+            createdAt: new Date().toISOString().split('T')[0]
+        } as Menu);
+        showCreateDialog.value = false;
+        newMenu.value = {
+            id: 0,
+            name: '',
+            category: '',
+            description: '',
+            image_url: '',
+            price: 0,
+            is_available: true,
+            menu_type_id: 0,
+            createdAt: new Date().toISOString().split('T')[0]
+        };
+    }
+};
+
+const saveMenu = () => {
+    if (editingMenu.value) {
+        const index = menus.value.findIndex(m => m.name === editingMenu.value?.name);
+        if (index !== -1) {
+            menus.value[index] = { ...editingMenu.value };
+        }
+        showEditDialog.value = false;
+        editingMenu.value = null;
+    }
+};
+
+const deleteMenu = () => {
+    if (menuToDelete.value) {
+        const index = menus.value.findIndex(m => m.name === menuToDelete.value?.name);
+        if (index !== -1) {
+            menus.value.splice(index, 1);
+        }
+        showDeleteDialog.value = false;
+        menuToDelete.value = null;
+    }
+};
+
+const confirmDeleteSelected = () => {
+    if (selectedMenus.value.size > 0) {
+        const indicesToDelete = menus.value
+            .map((menu, index) => selectedMenus.value.has(menu.name) ? index : -1)
+            .filter(index => index !== -1)
+            .reverse();
+
+        indicesToDelete.forEach(index => {
+            menus.value.splice(index, 1);
+        });
+
+        selectedMenus.value.clear();
+    }
+};
+
+// Add after the menus data
+const packages = ref<Package[]>([
+    {
+        id: 1,
+        name: 'BASIC PACKAGE',
+        description: 'Perfect for small gatherings',
+        price: 350,
+        meal_limit: 3,
+        minimum_guests: 30,
+        maximum_guests: 50,
+        status: 'active',
+        inclusions: ['Setup', 'Cleanup', 'Basic Decoration'],
+        image_url: 'https://images.unsplash.com/photo-1555244162-803834f70033',
+        createdAt: '2024-03-20'
+    },
+    {
+        id: 2,
+        name: 'PREMIUM PACKAGE',
+        description: 'Ideal for medium-sized events',
+        price: 450,
+        meal_limit: 4,
+        minimum_guests: 50,
+        maximum_guests: 100,
+        status: 'active',
+        inclusions: ['Setup', 'Cleanup', 'Premium Decoration', 'Waitstaff'],
+        image_url: 'https://images.unsplash.com/photo-1561910733-7a3a1220f11d',
+        createdAt: '2024-03-20'
+    },
+    {
+        id: 3,
+        name: 'DELUXE PACKAGE',
+        description: 'Perfect for large celebrations',
+        price: 550,
+        meal_limit: 5,
+        minimum_guests: 100,
+        maximum_guests: 200,
+        status: 'active',
+        inclusions: ['Setup', 'Cleanup', 'Luxury Decoration', 'Waitstaff', 'Event Coordinator'],
+        image_url: 'https://images.unsplash.com/photo-1464366400600-7168b8af9bc3',
+        createdAt: '2024-03-20'
+    },
+]);
+
+// Package management states
+const selectedPackages = ref<Set<string>>(new Set<string>());
+const packageSearchQuery = ref('');
+const packageSorting = ref<{ id: string; desc: boolean }[]>([]);
+const packagePagination = ref({
+    pageIndex: 0,
+    pageSize: 10,
+});
+
+// Package management dialogs
+const showCreatePackageDialog = ref(false);
+const showEditPackageDialog = ref(false);
+const showDeletePackageDialog = ref(false);
+const showPackageImagePreview = ref(false);
+const packagePreviewImage = ref<string>('');
+const editingPackage = ref<Package | null>(null);
+const packageToDelete = ref<Package | null>(null);
+
+const newPackage = ref<Partial<Package>>({
+    id: 0,
+    name: '',
+    description: '',
+    price: 0,
+    meal_limit: 3,
+    minimum_guests: 30,
+    maximum_guests: 50,
+    status: 'active',
+    inclusions: [],
+    image_url: '',
+    createdAt: new Date().toISOString().split('T')[0]
+});
+
+// Package table columns
+const packageColumns: ColumnDef<Package>[] = [
+    {
+        accessorKey: 'name',
+        header: 'Package Name',
+        cell: ({ row }) => h('div', { class: 'font-medium' }, row.original.name),
+        size: 200,
+    },
+    {
+        accessorKey: 'price',
+        header: 'Price per Head',
+        cell: ({ row }) => h('div', { class: 'font-medium' }, `₱${row.original.price.toLocaleString()}`),
+        size: 120,
+    },
+    {
+        accessorKey: 'meal_limit',
+        header: 'Meal Limit',
+        cell: ({ row }) => h('div', { class: 'text-muted-foreground' }, `${row.original.meal_limit} meals`),
+        size: 100,
+    },
+    {
+        accessorKey: 'minimum_guests',
+        header: 'Min. Guests',
+        cell: ({ row }) => h('div', { class: 'text-muted-foreground' }, row.original.minimum_guests),
+        size: 120,
+    },
+    {
+        accessorKey: 'maximum_guests',
+        header: 'Max. Guests',
+        cell: ({ row }) => h('div', { class: 'text-muted-foreground' }, row.original.maximum_guests),
+        size: 120,
+    },
+    {
+        accessorKey: 'status',
+        header: 'Status',
+        cell: ({ row }) => h(Badge, {
+            variant: row.original.status === 'active' ? 'default' : 'secondary',
+            class: row.original.status === 'active' ? 'bg-green-500/10 text-green-500' : 'bg-muted text-muted-foreground'
+        }, () => row.original.status),
+        size: 100,
+    },
+    {
+        id: 'actions',
+        header: '',
+        cell: ({ row }) => h('div', { class: 'flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity' }, [
+            h(Button, {
+                variant: 'ghost',
+                size: 'icon',
+                onClick: () => startEditingPackage(row.original)
+            }, () => h(Edit2, { class: 'h-4 w-4' })),
+            h(Button, {
+                variant: 'ghost',
+                size: 'icon',
+                class: 'text-destructive',
+                onClick: () => confirmDeletePackage(row.original)
+            }, () => h(Trash2, { class: 'h-4 w-4' }))
+        ]),
+        enableSorting: false,
+        enableHiding: false,
+        size: 100,
+    },
+];
+
+// Package table instance
+const packageTable = useVueTable({
+    data: packages,
+    columns: packageColumns,
+    getCoreRowModel: getCoreRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    state: {
+        sorting: packageSorting.value,
+        pagination: packagePagination.value,
+        globalFilter: packageSearchQuery.value,
+    },
+    onSortingChange: (updater) => {
+        packageSorting.value = typeof updater === 'function' ? updater(packageSorting.value) : updater;
+    },
+    onPaginationChange: (updater) => {
+        packagePagination.value = typeof updater === 'function' ? updater(packagePagination.value) : updater;
+    },
+    onGlobalFilterChange: (updater) => {
+        packageSearchQuery.value = typeof updater === 'function' ? updater(packageSearchQuery.value) : updater;
+    },
+});
+
+// Package management functions
+const previewPackageImage = (imageUrl: string) => {
+    if (imageUrl) {
+        packagePreviewImage.value = imageUrl;
+        showPackageImagePreview.value = true;
+    }
+};
+
+const startEditingPackage = (pkg: Package) => {
+    editingPackage.value = { ...pkg };
+    showEditPackageDialog.value = true;
+};
+
+const confirmDeletePackage = (pkg: Package) => {
+    packageToDelete.value = pkg;
+    showDeletePackageDialog.value = true;
+};
+
+const createPackage = () => {
+    if (newPackage.value.name) {
+        const newId = Math.max(...packages.value.map(p => p.id)) + 1;
+        packages.value.push({
+            ...newPackage.value,
+            id: newId,
+            is_available: true,
+            included_menus: [],
+            createdAt: new Date().toISOString().split('T')[0]
+        } as Package);
+        showCreatePackageDialog.value = false;
+        newPackage.value = {
+            id: 0,
+            name: '',
+            description: '',
+            price: 0,
+            meal_limit: 3,
+            minimum_guests: 30,
+            maximum_guests: 50,
+            status: 'active',
+            inclusions: [],
+            image_url: '',
+            createdAt: new Date().toISOString().split('T')[0]
+        };
+    }
+};
+
+const savePackage = () => {
+    if (editingPackage.value) {
+        const index = packages.value.findIndex(p => p.name === editingPackage.value?.name);
+        if (index !== -1) {
+            packages.value[index] = { ...editingPackage.value };
+        }
+        showEditPackageDialog.value = false;
+        editingPackage.value = null;
+    }
+};
+
+const deletePackage = () => {
+    if (packageToDelete.value) {
+        const index = packages.value.findIndex(p => p.name === packageToDelete.value?.name);
+        if (index !== -1) {
+            packages.value.splice(index, 1);
+        }
+        showDeletePackageDialog.value = false;
+        packageToDelete.value = null;
+    }
+};
+
+const confirmDeleteSelectedPackages = () => {
+    if (selectedPackages.value.size > 0) {
+        const indicesToDelete = packages.value
+            .map((pkg, index) => selectedPackages.value.has(pkg.name) ? index : -1)
+            .filter(index => index !== -1)
+            .reverse();
+
+        indicesToDelete.forEach(index => {
+            packages.value.splice(index, 1);
+        });
+
+        selectedPackages.value.clear();
+    }
+};
 
 // Fetch data on component mount
 onMounted(() => {
@@ -94,17 +728,14 @@ onMounted(() => {
         onSuccess: (page) => {
             const data = page.props as unknown as BackendData;
             stats.value.totalPackages = data.initialPackages?.length || 0;
-            stats.value.totalMenuItems = data.initialDishes?.length || 0;
+            stats.value.totalMenuItems = data.initialMenus?.length || 0;
 
             // Update menu data
             menuData.value.menuTypes = data.initialMenuTypes || [];
-            menuData.value.dishes = data.initialDishes || [];
+            menuData.value.menus = data.initialMenus || [];
         }
     });
 });
-
-
-
 
 </script>
 
@@ -142,14 +773,21 @@ onMounted(() => {
                         </TabsTrigger>
                         <TabsTrigger value="menu"
                             class="text-sm font-medium data-[state=active]:bg-primary/10 data-[state=active]:text-primary rounded-md px-8 transition-all duration-200 hover:bg-primary/5 hover:text-primary/80 relative overflow-hidden group">
-                            <span class="relative z-10">Menu Management</span>
+                            <span class="relative z-10">Menus</span>
                             <div
                                 class="absolute inset-0 bg-primary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                             </div>
                         </TabsTrigger>
                         <TabsTrigger value="packages"
                             class="text-sm font-medium data-[state=active]:bg-primary/10 data-[state=active]:text-primary rounded-md px-8 transition-all duration-200 hover:bg-primary/5 hover:text-primary/80 relative overflow-hidden group">
-                            <span class="relative z-10">Package Management</span>
+                            <span class="relative z-10">Packages</span>
+                            <div
+                                class="absolute inset-0 bg-primary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                            </div>
+                        </TabsTrigger>
+                        <TabsTrigger value="add-ons"
+                            class="text-sm font-medium data-[state=active]:bg-primary/10 data-[state=active]:text-primary rounded-md px-8 transition-all duration-200 hover:bg-primary/5 hover:text-primary/80 relative overflow-hidden group">
+                            <span class="relative z-10">Add-Ons</span>
                             <div
                                 class="absolute inset-0 bg-primary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                             </div>
@@ -363,12 +1001,745 @@ onMounted(() => {
 
                 <!-- Menu Management Tab -->
                 <TabsContent value="menu" class="mt-6">
-                    <Menus />
+                    <div class="flex h-full flex-1 flex-col gap-12 rounded-xl px-6 py-8 max-w-7xl mx-auto">
+                        <!-- Header -->
+                        <div class="text-center">
+                            <h1 class="text-4xl font-bold text-gray-900 mb-2">Menus</h1>
+                            <p class="text-lg text-muted-foreground">Manage all available menus</p>
+                        </div>
+
+                        <!-- Category Stats -->
+                        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+                            <Card v-for="[category, count] in categoryStats" :key="category"
+                                class="cursor-pointer hover:bg-muted/50 transition-colors"
+                                :class="{ 'ring-2 ring-primary': selectedCategory === category }"
+                                @click="selectedCategory = selectedCategory === category ? '' : category">
+                                <CardHeader class="p-4">
+                                    <CardTitle class="text-sm font-medium">{{ category }}</CardTitle>
+                                </CardHeader>
+                                <CardContent class="p-4 pt-0">
+                                    <p class="text-2xl font-bold">{{ count }}</p>
+                                    <p class="text-xs text-muted-foreground">menus</p>
+                                </CardContent>
+                            </Card>
+                        </div>
+
+                        <!-- Table Section -->
+                        <div>
+                            <div class="space-y-4">
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center gap-2">
+                                        <Input placeholder="Search menus..." v-model="searchQuery"
+                                            class="max-w-sm border-primary" />
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        <Button v-if="selectedMenus.size > 0" variant="destructive" size="sm"
+                                            @click="confirmDeleteSelected">
+                                            Delete Selected
+                                        </Button>
+                                        <Button variant="default" size="sm" @click="showCreateDialog = true">
+                                            <Plus class="h-4 w-4 mr-2" />
+                                            New Menu
+                                        </Button>
+                                    </div>
+                                </div>
+                                <div class="rounded-md border">
+                                    <div class="relative w-full overflow-auto">
+                                        <Table>
+                                            <TableHeader>
+                                                <TableRow class="bg-muted/50">
+                                                    <TableHead v-for="column in table.getAllColumns()" :key="column.id"
+                                                        :class="{
+                                                            'w-[50px]': column.id === 'select',
+                                                            'w-[100px]': column.id === 'actions',
+                                                            'bg-muted/50': true
+                                                        }">
+                                                        <template v-if="column.id === 'select'">
+                                                            <Checkbox
+                                                                :checked="selectedMenus.size === table.getRowModel().rows.length"
+                                                                @update:checked="(checked: boolean) => {
+                                                                    if (checked) {
+                                                                        table.getRowModel().rows.forEach(row =>
+                                                                            selectedMenus.add(row.original.name));
+                                                                    } else {
+                                                                        selectedMenus.clear();
+                                                                    }
+                                                                }" class="border-primary" />
+                                                        </template>
+                                                        <template v-else>
+                                                            <div class="flex items-center gap-2">
+                                                                {{ column.columnDef.header }}
+                                                                <Button v-if="column.getCanSort()" variant="ghost"
+                                                                    size="icon" class="h-8 w-8"
+                                                                    @click="column.getToggleSortingHandler()">
+                                                                    <ChevronsUpDown class="h-4 w-4" />
+                                                                </Button>
+                                                            </div>
+                                                        </template>
+                                                    </TableHead>
+                                                </TableRow>
+                                            </TableHeader>
+                                            <TableBody>
+                                                <TableRow v-for="row in table.getRowModel().rows" :key="row.id"
+                                                    class="group hover:bg-muted/50 transition-colors">
+                                                    <TableCell v-for="column in table.getAllColumns()" :key="column.id"
+                                                        :class="{
+                                                            'w-[50px]': column.id === 'select',
+                                                            'w-[100px]': column.id === 'actions',
+                                                            'text-left': true,
+                                                            'px-4': true
+                                                        }">
+                                                        <template v-if="column.id === 'select'">
+                                                            <Checkbox :checked="selectedMenus.has(row.original.name)"
+                                                                @update:checked="(checked: boolean) => {
+                                                                    if (checked) {
+                                                                        selectedMenus.add(row.original.name);
+                                                                    } else {
+                                                                        selectedMenus.delete(row.original.name);
+                                                                    }
+                                                                }" class="border-primary" />
+                                                        </template>
+                                                        <template
+                                                            v-else-if="typeof column.columnDef.cell === 'function'">
+                                                            <component :is="column.columnDef.cell({
+                                                                row,
+                                                                table,
+                                                                column,
+                                                                getValue: () => row.getValue(column.id),
+                                                                renderValue: () => row.getValue(column.id),
+                                                                cell: row.getVisibleCells().find(cell => cell.column.id === column.id) || row.getVisibleCells()[0]
+                                                            })" />
+                                                        </template>
+                                                        <template v-else>
+                                                            {{ column.columnDef.cell }}
+                                                        </template>
+                                                    </TableCell>
+                                                </TableRow>
+                                            </TableBody>
+                                        </Table>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="flex items-center justify-between mt-4">
+                                <div class="flex-1 text-sm text-muted-foreground">
+                                    {{ table.getFilteredRowModel().rows.length }} row(s) total
+                                </div>
+                                <div class="flex items-center space-x-6 lg:space-x-8">
+                                    <div class="flex items-center space-x-2">
+                                        <p class="text-sm font-medium">Rows per page</p>
+                                        <select :value="table.getState().pagination.pageSize"
+                                            @change="e => table.setPageSize(Number((e.target as HTMLSelectElement).value))"
+                                            class="h-8 w-[70px] rounded-md border border-input bg-background px-2 py-2 text-sm">
+                                            <option v-for="pageSize in [10, 20, 30, 40, 50]" :key="pageSize"
+                                                :value="pageSize">
+                                                {{ pageSize }}
+                                            </option>
+                                        </select>
+                                    </div>
+                                    <div class="flex w-[100px] items-center justify-center text-sm font-medium">
+                                        Page {{ table.getState().pagination.pageIndex + 1 }} of
+                                        {{ table.getPageCount() }}
+                                    </div>
+                                    <div class="flex items-center space-x-2">
+                                        <Button variant="outline" class="hidden h-8 w-8 p-0 lg:flex"
+                                            :disabled="!table.getCanPreviousPage()" @click="table.setPageIndex(0)">
+                                            <span class="sr-only">Go to first page</span>
+                                            <ChevronsLeft class="h-4 w-4" />
+                                        </Button>
+                                        <Button variant="outline" class="h-8 w-8 p-0"
+                                            :disabled="!table.getCanPreviousPage()" @click="table.previousPage()">
+                                            <span class="sr-only">Go to previous page</span>
+                                            <ChevronLeft class="h-4 w-4" />
+                                        </Button>
+                                        <Button variant="outline" class="h-8 w-8 p-0"
+                                            :disabled="!table.getCanNextPage()" @click="table.nextPage()">
+                                            <span class="sr-only">Go to next page</span>
+                                            <ChevronRight class="h-4 w-4" />
+                                        </Button>
+                                        <Button variant="outline" class="hidden h-8 w-8 p-0 lg:flex"
+                                            :disabled="!table.getCanNextPage()"
+                                            @click="table.setPageIndex(table.getPageCount() - 1)">
+                                            <span class="sr-only">Go to last page</span>
+                                            <ChevronsRight class="h-4 w-4" />
+                                        </Button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Create Menu Dialog -->
+                        <Dialog v-model:open="showCreateDialog">
+                            <DialogContent class="max-h-[90vh] overflow-y-auto">
+                                <DialogHeader>
+                                    <DialogTitle>Create New Menu</DialogTitle>
+                                    <DialogDescription>
+                                        Add a new menu item to your catering options.
+                                    </DialogDescription>
+                                </DialogHeader>
+                                <div class="space-y-4 py-4">
+                                    <div class="space-y-2">
+                                        <label class="text-sm font-medium">Menu Name</label>
+                                        <Input v-model="newMenu.name" placeholder="Enter menu name" />
+                                    </div>
+                                    <div class="space-y-2">
+                                        <label class="text-sm font-medium">Category</label>
+                                        <div class="flex gap-2">
+                                            <Select v-model="newMenu.category" class="flex-1">
+                                                <SelectTrigger>
+                                                    <SelectValue placeholder="Select category" />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    <SelectItem v-for="category in categories" :key="category"
+                                                        :value="category">
+                                                        {{ category }}
+                                                    </SelectItem>
+                                                </SelectContent>
+                                            </Select>
+                                            <Button variant="outline" size="icon" @click="showAddCategoryInput = true"
+                                                v-if="!showAddCategoryInput">
+                                                <Plus class="h-4 w-4" />
+                                            </Button>
+                                        </div>
+                                        <div v-if="showAddCategoryInput" class="flex gap-2 mt-2">
+                                            <Input v-model="newCategory" placeholder="New category name"
+                                                class="flex-1" />
+                                            <Button variant="default" size="sm" @click="addNewCategory">Add</Button>
+                                            <Button variant="ghost" size="icon" @click="showAddCategoryInput = false">
+                                                <X class="h-4 w-4" />
+                                            </Button>
+                                        </div>
+                                    </div>
+                                    <div class="space-y-2">
+                                        <label class="text-sm font-medium">Description</label>
+                                        <Input v-model="newMenu.description" placeholder="Enter description" />
+                                    </div>
+                                    <div class="space-y-2">
+                                        <label class="text-sm font-medium">Image URL</label>
+                                        <div class="flex gap-2">
+                                            <Input v-model="newMenu.image_url" placeholder="Enter image URL"
+                                                :class="{ 'border-red-500': newMenu.image_url && !validateImageUrl(newMenu.image_url) }" />
+                                            <Button variant="outline" size="icon"
+                                                @click="() => newMenu.image_url && previewMenuImage(newMenu.image_url)"
+                                                :disabled="!newMenu.image_url || !validateImageUrl(newMenu.image_url)">
+                                                <Search class="h-4 w-4" />
+                                            </Button>
+                                        </div>
+                                        <p v-if="newMenu.image_url && !validateImageUrl(newMenu.image_url)"
+                                            class="text-sm text-red-500">
+                                            Please enter a valid image URL
+                                        </p>
+                                        <div v-if="newMenu.image_url && validateImageUrl(newMenu.image_url)"
+                                            class="mt-2">
+                                            <img :src="newMenu.image_url" class="h-32 w-32 object-cover rounded-lg"
+                                                :alt="newMenu.name || 'New menu'" />
+                                        </div>
+                                        <p class="text-sm text-muted-foreground mt-1">
+                                            Tip: Use high-quality images from services like Unsplash or your own hosted
+                                            images.
+                                        </p>
+                                    </div>
+                                </div>
+                                <DialogFooter>
+                                    <Button variant="outline" @click="showCreateDialog = false">Cancel</Button>
+                                    <Button @click="createMenu"
+                                        :disabled="!newMenu.name?.trim() || !newMenu.category?.trim()">
+                                        Create Menu
+                                    </Button>
+                                </DialogFooter>
+                            </DialogContent>
+                        </Dialog>
+
+                        <!-- Edit Menu Dialog -->
+                        <Dialog v-model:open="showEditDialog">
+                            <DialogContent class="max-h-[90vh] overflow-y-auto">
+                                <DialogHeader>
+                                    <DialogTitle>Edit Menu</DialogTitle>
+                                    <DialogDescription>
+                                        Modify the menu details.
+                                    </DialogDescription>
+                                </DialogHeader>
+                                <div class="space-y-4 py-4" v-if="editingMenu">
+                                    <div class="space-y-2">
+                                        <label class="text-sm font-medium">Menu Name</label>
+                                        <Input v-model="editingMenu.name" placeholder="Enter menu name" />
+                                    </div>
+                                    <div class="space-y-2">
+                                        <label class="text-sm font-medium">Category</label>
+                                        <div class="flex gap-2">
+                                            <Select v-model="editingMenu.category" class="flex-1">
+                                                <SelectTrigger>
+                                                    <SelectValue placeholder="Select category" />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    <SelectItem v-for="category in categories" :key="category"
+                                                        :value="category">
+                                                        {{ category }}
+                                                    </SelectItem>
+                                                </SelectContent>
+                                            </Select>
+                                            <Button variant="outline" size="icon" @click="showAddCategoryInput = true"
+                                                v-if="!showAddCategoryInput">
+                                                <Plus class="h-4 w-4" />
+                                            </Button>
+                                        </div>
+                                        <div v-if="showAddCategoryInput" class="flex gap-2 mt-2">
+                                            <Input v-model="newCategory" placeholder="New category name"
+                                                class="flex-1" />
+                                            <Button variant="default" size="sm" @click="addNewCategory">Add</Button>
+                                            <Button variant="ghost" size="icon" @click="showAddCategoryInput = false">
+                                                <X class="h-4 w-4" />
+                                            </Button>
+                                        </div>
+                                    </div>
+                                    <div class="space-y-2">
+                                        <label class="text-sm font-medium">Description</label>
+                                        <Input v-model="editingMenu.description" placeholder="Enter description" />
+                                    </div>
+                                    <div class="space-y-2">
+                                        <label class="text-sm font-medium">Image URL</label>
+                                        <div class="flex gap-2">
+                                            <Input v-model="editingMenu.image_url" placeholder="Enter image URL"
+                                                :class="{ 'border-red-500': editingMenu.image_url && !validateImageUrl(editingMenu.image_url) }" />
+                                            <Button variant="outline" size="icon"
+                                                @click="() => editingMenu?.image_url && previewMenuImage(editingMenu?.image_url)"
+                                                :disabled="!editingMenu.image_url || !validateImageUrl(editingMenu.image_url)">
+                                                <Search class="h-4 w-4" />
+                                            </Button>
+                                        </div>
+                                        <p v-if="editingMenu.image_url && !validateImageUrl(editingMenu.image_url)"
+                                            class="text-sm text-red-500">
+                                            Please enter a valid image URL
+                                        </p>
+                                        <div v-if="editingMenu.image_url && validateImageUrl(editingMenu.image_url)"
+                                            class="mt-2">
+                                            <img :src="editingMenu.image_url" class="h-32 w-32 object-cover rounded-lg"
+                                                :alt="editingMenu.name" />
+                                        </div>
+                                        <p class="text-sm text-muted-foreground mt-1">
+                                            Tip: Use high-quality images from services like Unsplash or your own hosted
+                                            images.
+                                        </p>
+                                    </div>
+                                </div>
+                                <DialogFooter>
+                                    <Button variant="outline" @click="showEditDialog = false">Cancel</Button>
+                                    <Button @click="saveMenu"
+                                        :disabled="!editingMenu?.name?.trim() || !editingMenu?.category?.trim()">
+                                        Save Changes
+                                    </Button>
+                                </DialogFooter>
+                            </DialogContent>
+                        </Dialog>
+
+                        <!-- Delete Menu Dialog -->
+                        <Dialog v-model:open="showDeleteDialog">
+                            <DialogContent>
+                                <DialogHeader>
+                                    <DialogTitle>Delete Menu</DialogTitle>
+                                    <DialogDescription>
+                                        Are you sure you want to delete this menu? This action cannot be undone.
+                                    </DialogDescription>
+                                </DialogHeader>
+                                <DialogFooter>
+                                    <Button variant="outline" @click="showDeleteDialog = false">Cancel</Button>
+                                    <Button variant="destructive" @click="deleteMenu">Delete</Button>
+                                </DialogFooter>
+                            </DialogContent>
+                        </Dialog>
+
+                        <!-- Image Preview Dialog -->
+                        <Dialog v-model:open="showImagePreview">
+                            <DialogContent class="sm:max-w-xl">
+                                <DialogHeader>
+                                    <DialogTitle>Image Preview</DialogTitle>
+                                </DialogHeader>
+                                <div class="relative aspect-video w-full overflow-hidden rounded-lg">
+                                    <img :src="previewImage" class="w-full h-full object-contain" :alt="previewImage" />
+                                </div>
+                                <DialogFooter>
+                                    <Button variant="outline" @click="showImagePreview = false">Close</Button>
+                                    <Button variant="default" asChild>
+                                        <a :href="previewImage" target="_blank" rel="noopener noreferrer">
+                                            <ExternalLink class="h-4 w-4 mr-2" />
+                                            Open Original
+                                        </a>
+                                    </Button>
+                                </DialogFooter>
+                            </DialogContent>
+                        </Dialog>
+                    </div>
                 </TabsContent>
 
                 <!-- Package Management Tab -->
                 <TabsContent value="packages" class="mt-6">
-                    <!-- Content will be added here -->
+                    <div class="flex h-full flex-1 flex-col gap-12 rounded-xl px-6 py-8 max-w-7xl mx-auto">
+                        <!-- Header -->
+                        <div class="text-center">
+                            <h1 class="text-4xl font-bold text-gray-900 mb-2">Packages</h1>
+                            <p class="text-lg text-muted-foreground">Manage all available catering packages</p>
+                        </div>
+
+                        <!-- Table Section -->
+                        <div>
+                            <div class="space-y-4">
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center gap-2">
+                                        <Input placeholder="Search packages..." v-model="packageSearchQuery"
+                                            class="max-w-sm border-primary" />
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        <Button v-if="selectedPackages.size > 0" variant="destructive" size="sm"
+                                            @click="confirmDeleteSelectedPackages">
+                                            Delete Selected
+                                        </Button>
+                                        <Button variant="default" size="sm" @click="showCreatePackageDialog = true">
+                                            <Plus class="h-4 w-4 mr-2" />
+                                            New Package
+                                        </Button>
+                                    </div>
+                                </div>
+                                <div class="rounded-md border">
+                                    <div class="relative w-full overflow-auto">
+                                        <Table>
+                                            <TableHeader>
+                                                <TableRow class="bg-muted/50">
+                                                    <TableHead v-for="column in packageTable.getAllColumns()"
+                                                        :key="column.id" :class="{
+                                                            'w-[50px]': column.id === 'select',
+                                                            'w-[100px]': column.id === 'actions',
+                                                            'bg-muted/50': true
+                                                        }">
+                                                        <template v-if="column.id === 'select'">
+                                                            <Checkbox
+                                                                :checked="selectedPackages.size === packageTable.getRowModel().rows.length"
+                                                                @update:checked="(checked: boolean) => {
+                                                                    if (checked) {
+                                                                        packageTable.getRowModel().rows.forEach(row =>
+                                                                            selectedPackages.add(row.original.name));
+                                                                    } else {
+                                                                        selectedPackages.clear();
+                                                                    }
+                                                                }" class="border-primary" />
+                                                        </template>
+                                                        <template v-else>
+                                                            <div class="flex items-center gap-2">
+                                                                {{ column.columnDef.header }}
+                                                                <Button v-if="column.getCanSort()" variant="ghost"
+                                                                    size="icon" class="h-8 w-8"
+                                                                    @click="column.getToggleSortingHandler()">
+                                                                    <ChevronsUpDown class="h-4 w-4" />
+                                                                </Button>
+                                                            </div>
+                                                        </template>
+                                                    </TableHead>
+                                                </TableRow>
+                                            </TableHeader>
+                                            <TableBody>
+                                                <TableRow v-for="row in packageTable.getRowModel().rows" :key="row.id"
+                                                    class="group hover:bg-muted/50 transition-colors">
+                                                    <TableCell v-for="column in packageTable.getAllColumns()"
+                                                        :key="column.id" :class="{
+                                                            'w-[50px]': column.id === 'select',
+                                                            'w-[100px]': column.id === 'actions',
+                                                            'text-left': true,
+                                                            'px-4': true
+                                                        }">
+                                                        <template v-if="column.id === 'select'">
+                                                            <Checkbox :checked="selectedPackages.has(row.original.name)"
+                                                                @update:checked="(checked: boolean) => {
+                                                                    if (checked) {
+                                                                        selectedPackages.add(row.original.name);
+                                                                    } else {
+                                                                        selectedPackages.delete(row.original.name);
+                                                                    }
+                                                                }" class="border-primary" />
+                                                        </template>
+                                                        <template
+                                                            v-else-if="typeof column.columnDef.cell === 'function'">
+                                                            <component :is="column.columnDef.cell({
+                                                                row,
+                                                                table: packageTable,
+                                                                column,
+                                                                getValue: () => row.getValue(column.id),
+                                                                renderValue: () => row.getValue(column.id),
+                                                                cell: row.getVisibleCells().find(cell => cell.column.id === column.id) || row.getVisibleCells()[0]
+                                                            })" />
+                                                        </template>
+                                                        <template v-else>
+                                                            {{ column.columnDef.cell }}
+                                                        </template>
+                                                    </TableCell>
+                                                </TableRow>
+                                            </TableBody>
+                                        </Table>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="flex items-center justify-between mt-4">
+                                <div class="flex-1 text-sm text-muted-foreground">
+                                    {{ packageTable.getFilteredRowModel().rows.length }} row(s) total
+                                </div>
+                                <div class="flex items-center space-x-6 lg:space-x-8">
+                                    <div class="flex items-center space-x-2">
+                                        <p class="text-sm font-medium">Rows per page</p>
+                                        <select :value="packageTable.getState().pagination.pageSize"
+                                            @change="e => packageTable.setPageSize(Number((e.target as HTMLSelectElement).value))"
+                                            class="h-8 w-[70px] rounded-md border border-input bg-background px-2 py-2 text-sm">
+                                            <option v-for="pageSize in [10, 20, 30, 40, 50]" :key="pageSize"
+                                                :value="pageSize">
+                                                {{ pageSize }}
+                                            </option>
+                                        </select>
+                                    </div>
+                                    <div class="flex w-[100px] items-center justify-center text-sm font-medium">
+                                        Page {{ packageTable.getState().pagination.pageIndex + 1 }} of
+                                        {{ packageTable.getPageCount() }}
+                                    </div>
+                                    <div class="flex items-center space-x-2">
+                                        <Button variant="outline" class="hidden h-8 w-8 p-0 lg:flex"
+                                            :disabled="!packageTable.getCanPreviousPage()"
+                                            @click="packageTable.setPageIndex(0)">
+                                            <span class="sr-only">Go to first page</span>
+                                            <ChevronsLeft class="h-4 w-4" />
+                                        </Button>
+                                        <Button variant="outline" class="h-8 w-8 p-0"
+                                            :disabled="!packageTable.getCanPreviousPage()"
+                                            @click="packageTable.previousPage()">
+                                            <span class="sr-only">Go to previous page</span>
+                                            <ChevronLeft class="h-4 w-4" />
+                                        </Button>
+                                        <Button variant="outline" class="h-8 w-8 p-0"
+                                            :disabled="!packageTable.getCanNextPage()" @click="packageTable.nextPage()">
+                                            <span class="sr-only">Go to next page</span>
+                                            <ChevronRight class="h-4 w-4" />
+                                        </Button>
+                                        <Button variant="outline" class="hidden h-8 w-8 p-0 lg:flex"
+                                            :disabled="!packageTable.getCanNextPage()"
+                                            @click="packageTable.setPageIndex(packageTable.getPageCount() - 1)">
+                                            <span class="sr-only">Go to last page</span>
+                                            <ChevronsRight class="h-4 w-4" />
+                                        </Button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Create Package Dialog -->
+                        <Dialog v-model:open="showCreatePackageDialog">
+                            <DialogContent class="max-h-[90vh] overflow-y-auto">
+                                <DialogHeader>
+                                    <DialogTitle>Create New Package</DialogTitle>
+                                    <DialogDescription>
+                                        Add a new catering package.
+                                    </DialogDescription>
+                                </DialogHeader>
+                                <div class="space-y-4 py-4">
+                                    <div class="space-y-2">
+                                        <label class="text-sm font-medium">Package Name</label>
+                                        <Input v-model="newPackage.name" placeholder="Enter package name" />
+                                    </div>
+                                    <div class="space-y-2">
+                                        <label class="text-sm font-medium">Description</label>
+                                        <Input v-model="newPackage.description" placeholder="Enter description" />
+                                    </div>
+                                    <div class="grid grid-cols-2 gap-4">
+                                        <div class="space-y-2">
+                                            <label class="text-sm font-medium">Price per Head</label>
+                                            <Input v-model="newPackage.price" type="number" min="0"
+                                                placeholder="Enter price" />
+                                        </div>
+                                        <div class="space-y-2">
+                                            <label class="text-sm font-medium">Meal Limit</label>
+                                            <Input v-model="newPackage.meal_limit" type="number" min="1"
+                                                placeholder="Enter meal limit" />
+                                        </div>
+                                        <div class="space-y-2">
+                                            <label class="text-sm font-medium">Minimum Guests</label>
+                                            <Input v-model="newPackage.minimum_guests" type="number" min="1"
+                                                placeholder="Enter minimum guests" />
+                                        </div>
+                                        <div class="space-y-2">
+                                            <label class="text-sm font-medium">Maximum Guests</label>
+                                            <Input v-model="newPackage.maximum_guests" type="number"
+                                                :min="newPackage.minimum_guests || 1"
+                                                placeholder="Enter maximum guests" />
+                                        </div>
+                                    </div>
+                                    <div class="space-y-2">
+                                        <label class="text-sm font-medium">Status</label>
+                                        <Select v-model="newPackage.status">
+                                            <SelectTrigger>
+                                                <SelectValue placeholder="Select status" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="active">Active</SelectItem>
+                                                <SelectItem value="inactive">Inactive</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                    <div class="space-y-2">
+                                        <label class="text-sm font-medium">Image URL</label>
+                                        <div class="flex gap-2">
+                                            <Input v-model="newPackage.image_url" placeholder="Enter image URL"
+                                                :class="{ 'border-red-500': newPackage.image_url && !validateImageUrl(newPackage.image_url) }" />
+                                            <Button variant="outline" size="icon"
+                                                @click="() => newPackage.image_url && previewPackageImage(newPackage.image_url)"
+                                                :disabled="!newPackage.image_url || !validateImageUrl(newPackage.image_url)">
+                                                <Search class="h-4 w-4" />
+                                            </Button>
+                                        </div>
+                                        <p v-if="newPackage.image_url && !validateImageUrl(newPackage.image_url)"
+                                            class="text-sm text-red-500">
+                                            Please enter a valid image URL
+                                        </p>
+                                        <div v-if="newPackage.image_url && validateImageUrl(newPackage.image_url)"
+                                            class="mt-2">
+                                            <img :src="newPackage.image_url" class="h-32 w-32 object-cover rounded-lg"
+                                                :alt="newPackage.name || 'New package'" />
+                                        </div>
+                                        <p class="text-sm text-muted-foreground mt-1">
+                                            Tip: Use high-quality images from services like Unsplash or your own hosted
+                                            images.
+                                        </p>
+                                    </div>
+                                </div>
+                                <DialogFooter>
+                                    <Button variant="outline" @click="showCreatePackageDialog = false">Cancel</Button>
+                                    <Button @click="createPackage" :disabled="!newPackage.name?.trim()">
+                                        Create Package
+                                    </Button>
+                                </DialogFooter>
+                            </DialogContent>
+                        </Dialog>
+
+                        <!-- Edit Package Dialog -->
+                        <Dialog v-model:open="showEditPackageDialog">
+                            <DialogContent class="max-h-[90vh] overflow-y-auto">
+                                <DialogHeader>
+                                    <DialogTitle>Edit Package</DialogTitle>
+                                    <DialogDescription>
+                                        Modify the package details.
+                                    </DialogDescription>
+                                </DialogHeader>
+                                <div class="space-y-4 py-4" v-if="editingPackage">
+                                    <div class="space-y-2">
+                                        <label class="text-sm font-medium">Package Name</label>
+                                        <Input v-model="editingPackage.name" placeholder="Enter package name" />
+                                    </div>
+                                    <div class="space-y-2">
+                                        <label class="text-sm font-medium">Description</label>
+                                        <Input v-model="editingPackage.description" placeholder="Enter description" />
+                                    </div>
+                                    <div class="grid grid-cols-2 gap-4">
+                                        <div class="space-y-2">
+                                            <label class="text-sm font-medium">Price per Head</label>
+                                            <Input v-model="editingPackage.price" type="number" min="0"
+                                                placeholder="Enter price" />
+                                        </div>
+                                        <div class="space-y-2">
+                                            <label class="text-sm font-medium">Meal Limit</label>
+                                            <Input v-model="editingPackage.meal_limit" type="number" min="1"
+                                                placeholder="Enter meal limit" />
+                                        </div>
+                                        <div class="space-y-2">
+                                            <label class="text-sm font-medium">Minimum Guests</label>
+                                            <Input v-model="editingPackage.minimum_guests" type="number" min="1"
+                                                placeholder="Enter minimum guests" />
+                                        </div>
+                                        <div class="space-y-2">
+                                            <label class="text-sm font-medium">Maximum Guests</label>
+                                            <Input v-model="editingPackage.maximum_guests" type="number"
+                                                :min="editingPackage.minimum_guests || 1"
+                                                placeholder="Enter maximum guests" />
+                                        </div>
+                                    </div>
+                                    <div class="space-y-2">
+                                        <label class="text-sm font-medium">Status</label>
+                                        <Select v-model="editingPackage.status">
+                                            <SelectTrigger>
+                                                <SelectValue placeholder="Select status" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="active">Active</SelectItem>
+                                                <SelectItem value="inactive">Inactive</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                    <div class="space-y-2">
+                                        <label class="text-sm font-medium">Image URL</label>
+                                        <div class="flex gap-2">
+                                            <Input v-model="editingPackage.image_url" placeholder="Enter image URL"
+                                                :class="{ 'border-red-500': editingPackage.image_url && !validateImageUrl(editingPackage.image_url) }" />
+                                            <Button variant="outline" size="icon"
+                                                @click="() => editingPackage?.image_url && previewPackageImage(editingPackage?.image_url)"
+                                                :disabled="!editingPackage.image_url || !validateImageUrl(editingPackage.image_url)">
+                                                <Search class="h-4 w-4" />
+                                            </Button>
+                                        </div>
+                                        <p v-if="editingPackage.image_url && !validateImageUrl(editingPackage.image_url)"
+                                            class="text-sm text-red-500">
+                                            Please enter a valid image URL
+                                        </p>
+                                        <div v-if="editingPackage.image_url && validateImageUrl(editingPackage.image_url)"
+                                            class="mt-2">
+                                            <img :src="editingPackage.image_url"
+                                                class="h-32 w-32 object-cover rounded-lg" :alt="editingPackage.name" />
+                                        </div>
+                                        <p class="text-sm text-muted-foreground mt-1">
+                                            Tip: Use high-quality images from services like Unsplash or your own hosted
+                                            images.
+                                        </p>
+                                    </div>
+                                </div>
+                                <DialogFooter>
+                                    <Button variant="outline" @click="showEditPackageDialog = false">Cancel</Button>
+                                    <Button @click="savePackage" :disabled="!editingPackage?.name?.trim()">
+                                        Save Changes
+                                    </Button>
+                                </DialogFooter>
+                            </DialogContent>
+                        </Dialog>
+
+                        <!-- Delete Package Dialog -->
+                        <Dialog v-model:open="showDeletePackageDialog">
+                            <DialogContent>
+                                <DialogHeader>
+                                    <DialogTitle>Delete Package</DialogTitle>
+                                    <DialogDescription>
+                                        Are you sure you want to delete this package? This action cannot be undone.
+                                    </DialogDescription>
+                                </DialogHeader>
+                                <DialogFooter>
+                                    <Button variant="outline" @click="showDeletePackageDialog = false">Cancel</Button>
+                                    <Button variant="destructive" @click="deletePackage">Delete</Button>
+                                </DialogFooter>
+                            </DialogContent>
+                        </Dialog>
+
+                        <!-- Image Preview Dialog -->
+                        <Dialog v-model:open="showPackageImagePreview">
+                            <DialogContent class="sm:max-w-xl">
+                                <DialogHeader>
+                                    <DialogTitle>Image Preview</DialogTitle>
+                                </DialogHeader>
+                                <div class="relative aspect-video w-full overflow-hidden rounded-lg">
+                                    <img :src="packagePreviewImage" class="w-full h-full object-contain"
+                                        :alt="packagePreviewImage" />
+                                </div>
+                                <DialogFooter>
+                                    <Button variant="outline" @click="showPackageImagePreview = false">Close</Button>
+                                    <Button variant="default" asChild>
+                                        <a :href="packagePreviewImage" target="_blank" rel="noopener noreferrer">
+                                            <ExternalLink class="h-4 w-4 mr-2" />
+                                            Open Original
+                                        </a>
+                                    </Button>
+                                </DialogFooter>
+                            </DialogContent>
+                        </Dialog>
+                    </div>
                 </TabsContent>
             </Tabs>
         </div>
