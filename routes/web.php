@@ -1,6 +1,6 @@
 <?php
 
-use App\Http\Controllers\Pages\CateringPackagesController;
+use App\Http\Controllers\Pages\CateringController;
 use App\Http\Controllers\Pages\DashboardController;
 use App\Http\Controllers\Pages\ManageCateringController;
 use App\Http\Controllers\Pages\ReportsController;
@@ -16,10 +16,21 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Dashboard
     Route::get('dashboard', [DashboardController::class, 'index'])->name('show.dashboard.page');
 
+
+    // Reservations Routes
+    Route::prefix('reservations')->group(function () {
+        Route::get('/', [ReservationsController::class, 'index'])->name('show.reservations.page');
+    });
+
+    // Reports Routes
+    Route::prefix('reports')->group(function () {
+        Route::get('/', [ReportsController::class, 'index'])->name('show.reports.page');
+    });
+
     // Catering Routes
     Route::prefix('catering')->group(function () {
         // Dashboard
-        Route::get('/', [ManageCateringController::class, 'index'])->name('show.catering.page');
+        Route::get('/', [CateringController::class, 'index'])->name('show.catering.page');
 
         // Reservations
         Route::prefix('reservations')->group(function () {
@@ -30,16 +41,16 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         // Packages
         Route::prefix('packages')->group(function () {
-            Route::get('/', [ManageCateringController::class, 'packages'])->name('show.catering.packages.page');
-            Route::get('/new', [ManageCateringController::class, 'createPackage'])->name('catering.packages.create');
-            Route::put('/{package}', [ManageCateringController::class, 'updatePackage'])->name('catering.packages.update');
-            Route::delete('/{package}', [ManageCateringController::class, 'deletePackage'])->name('catering.packages.delete');
+            Route::get('/', [CateringController::class, 'packages'])->name('show.catering.packages.page');
+            Route::get('/new', [CateringController::class, 'createPackage'])->name('catering.packages.create');
+            Route::put('/{package}', [CateringController::class, 'updatePackage'])->name('catering.packages.update');
+            Route::delete('/{package}', [CateringController::class, 'deletePackage'])->name('catering.packages.delete');
         });
 
         // Menu
         Route::prefix('menu')->group(function () {
-            Route::get('/categories', [ManageCateringController::class, 'categories'])->name('catering.menu.categories');
-            Route::get('/dishes', [ManageCateringController::class, 'dishes'])->name('catering.menu.dishes');
+            Route::get('/categories', [CateringController::class, 'categories'])->name('catering.menu.categories');
+            Route::get('/dishes', [CateringController::class, 'dishes'])->name('catering.menu.dishes');
         });
 
         // Reports
@@ -51,10 +62,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         // Settings
         Route::prefix('settings')->group(function () {
-            Route::get('/', [ManageCateringController::class, 'settings'])->name('catering.settings');
-            Route::get('/profile', [ManageCateringController::class, 'profile'])->name('catering.settings.profile');
-            Route::get('/system', [ManageCateringController::class, 'system'])->name('catering.settings.system');
-            Route::put('/minimum-guests', [ManageCateringController::class, 'updateMinimumPersons'])
+            Route::get('/', [CateringController::class, 'settings'])->name('catering.settings');
+            Route::get('/profile', [CateringController::class, 'profile'])->name('catering.settings.profile');
+            Route::get('/system', [CateringController::class, 'system'])->name('catering.settings.system');
+            Route::put('/minimum-guests', [CateringController::class, 'updateMinimumPersons'])
                 ->name('catering.settings.minimum-guests');
         });
     });

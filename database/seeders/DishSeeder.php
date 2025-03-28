@@ -3,7 +3,7 @@
 namespace Database\Seeders;
 
 use App\Models\Dish;
-use App\Models\MealType;
+use App\Models\MenuType;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Carbon;
 
@@ -14,21 +14,21 @@ class DishSeeder extends Seeder
      */
     public function run(): void
     {
-        // Get meal types
-        $beefType = MealType::where('name', 'Beef')->first();
-        $porkType = MealType::where('name', 'Pork')->first();
-        $chickenType = MealType::where('name', 'Chicken')->first();
-        $fishAndSeafoodType = MealType::where('name', 'Fish & Seafoods')->first();
-        $vegetableType = MealType::where('name', 'Vegetables')->first();
-        $pastaType = MealType::where('name', 'Pasta')->first();
-        $noodlesType = MealType::where('name', 'Noodles')->first();
-        $dessertType = MealType::where('name', 'Dessert')->first();
+        // Get menu types
+        $beefType = MenuType::where('name', 'Beef')->first();
+        $porkType = MenuType::where('name', 'Pork')->first();
+        $chickenType = MenuType::where('name', 'Chicken')->first();
+        $fishAndSeafoodType = MenuType::where('name', 'Fish & Seafoods')->first();
+        $vegetableType = MenuType::where('name', 'Vegetables')->first();
+        $pastaType = MenuType::where('name', 'Pasta')->first();
+        $noodlesType = MenuType::where('name', 'Noodles')->first();
+        $dessertType = MenuType::where('name', 'Dessert')->first();
 
         if (
             !$beefType || !$porkType || !$chickenType || !$fishAndSeafoodType ||
             !$vegetableType || !$pastaType || !$noodlesType || !$dessertType
         ) {
-            throw new \Exception('Required meal types not found. Please run MealTypeSeeder first.');
+            throw new \Exception('Required menu types not found. Please run MenuTypeSeeder first.');
         }
 
         $now = Carbon::now();
@@ -447,7 +447,7 @@ class DishSeeder extends Seeder
 
         foreach ($dishTypes as [$typeId, $dishes]) {
             foreach ($dishes as $dish) {
-                $dish['meal_type_id'] = $typeId;
+                $dish['menu_type_id'] = $typeId;
                 $dish['is_available'] = true;
                 Dish::create($dish);
             }

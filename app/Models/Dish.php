@@ -5,13 +5,14 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\Builder;
 
 class Dish extends Model
 {
     use HasFactory, SoftDeletes;
 
     protected $fillable = [
-        'meal_type_id',
+        'menu_type_id',
         'name',
         'description',
         'image_url',
@@ -25,11 +26,11 @@ class Dish extends Model
     ];
 
     /**
-     * Get the meal type that owns the dish.
+     * Get the menu type that owns the dish.
      */
-    public function mealType()
+    public function menuType()
     {
-        return $this->belongsTo(MealType::class);
+        return $this->belongsTo(MenuType::class);
     }
 
     /**
@@ -41,11 +42,11 @@ class Dish extends Model
     }
 
     /**
-     * Scope a query to only include dishes of a specific meal type.
+     * Scope a query to only include dishes of a specific menu type.
      */
-    public function scopeOfMealType(Builder $query, $mealTypeId)
+    public function scopeOfMenuType(Builder $query, $menuTypeId)
     {
-        return $query->where('meal_type_id', $mealTypeId);
+        return $query->where('menu_type_id', $menuTypeId);
     }
 
     /**

@@ -44,6 +44,23 @@ const mainNavItems: NavItem[] = [
         href: '/dashboard',
         icon: LayoutGrid,
     },
+    {
+        title: 'Catering',
+        href: '/catering',
+        icon: LayoutGrid,
+    },
+    {
+        title: 'Reservations',
+        href: '/reservations',
+        icon: LayoutGrid,
+    },
+    {
+        title: 'Reports',
+        href: '/reports',
+        icon: LayoutGrid,
+    },
+
+
 ];
 
 const rightNavItems: NavItem[] = [
@@ -102,7 +119,7 @@ const userFullName = computed(() => `${auth.value.user.first_name} ${auth.value.
                     </Sheet>
                 </div>
 
-                <Link :href="route('dashboard')" class="flex items-center gap-x-2">
+                <Link :href="route('show.dashboard.page')" class="flex items-center gap-x-2">
                 <AppLogo />
                 </Link>
 
