@@ -2,39 +2,31 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use App\Models\MenuType;
 
 class Package extends Model
 {
-    use HasFactory, SoftDeletes;
-
     protected $fillable = [
         'name',
         'price',
-        'min_guests',
-        'menu_limit',
-        'predefined_drinks',
+        'meal_limit',
+        'minimum_guests',
+        'maximum_guests',
+        'status',
         'icon',
         'description',
         'features'
     ];
 
     protected $casts = [
-        'features' => 'array',
-        'predefined_drinks' => 'boolean',
-        'price' => 'decimal:2'
+        'features' => 'array'
     ];
 
-    // Helper method to get formatted features
-    public function getFormattedFeatures()
+    public function menuTypes(): BelongsToMany
     {
-        return collect($this->features)->map(function ($feature) {
-            return [
-                'text' => $feature['feature'],
-                'icon' => $feature['icon'] ?? null
-            ];
-        });
+        return $this->belongsToMany(MenuType::class, 'package_menutypes')
+            ->withTimestamps();
     }
 }

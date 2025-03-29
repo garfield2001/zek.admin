@@ -17,11 +17,12 @@ class DatabaseSeeder extends Seeder
             MenuTypeSeeder::class,
             MenuSeeder::class,
             PackageSeeder::class,
-            CateringSettingSeeder::class,
             AddonCategorySeeder::class,
             AddonPackageSeeder::class,
             AddonPackageMenuSeeder::class,
             CustomerSeeder::class,
+            CateringSettingSeeder::class,
+            // Add other seeders...
         ]);
     }
 }

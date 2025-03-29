@@ -2,24 +2,30 @@
 
 namespace Database\Seeders;
 
-use App\Models\CateringSetting;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Carbon;
 
 class CateringSettingSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
     public function run(): void
     {
-        CateringSetting::create([
-            'key' => 'minimum_guests',
-            'value' => 50,
-            'type' => 'integer',
-            'description' => 'Minimum number of guests required for catering services',
-        ]);
+        // Add any global catering settings here
+        // This is just an example - adjust according to your needs
+        $settings = [
+            [
+                'key' => 'minimum_notice_days',
+                'value' => '7',
+                'description' => 'Minimum days notice required for booking'
+            ],
+            [
+                'key' => 'deposit_percentage',
+                'value' => '50',
+                'description' => 'Required deposit percentage'
+            ],
+        ];
+
+        foreach ($settings as $setting) {
+            DB::table('catering_settings')->insert($setting);
+        }
     }
 }

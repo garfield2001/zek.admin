@@ -2,40 +2,35 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use App\Models\MenuTypeCategory;
 
 class MenuType extends Model
 {
-    use HasFactory, SoftDeletes;
+    protected $fillable = ['name', 'description'];
 
-    protected $fillable = [
-        'name',
-        'description',
-    ];
-
-    /**
-     * Get the menus of this menu type.
-     */
-    public function menus()
+    public function menus(): HasMany
     {
         return $this->hasMany(Menu::class);
     }
 
-    /**
-     * Get only available menus of this menu type.
-     */
-    public function availableMenus()
+    public function packages(): BelongsToMany
     {
-        return $this->hasMany(Menu::class)->where('is_available', true);
+        return $this->belongsToMany(Package::class, 'package_menutypes')
+            ->withTimestamps();
     }
 
-    /**
-     * Get the count of available menus in this menu type.
-     */
-    public function getAvailableMenusCountAttribute()
+    public function addonPackages(): BelongsToMany
     {
-        return $this->menus()->where('is_available', true)->count();
+        return $this->belongsToMany(AddonPackage::class, 'addon_package_menutypes')
+            ->withTimestamps();
+    }
+
+    public function categories(): BelongsToMany
+    {
+        return $this->belongsToMany(MenuTypeCategory::class, 'menutype_categories', 'menu_type_id', 'category')
+            ->withTimestamps();
     }
 }

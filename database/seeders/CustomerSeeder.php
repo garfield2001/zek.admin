@@ -10,19 +10,18 @@ class CustomerSeeder extends Seeder
 {
     public function run(): void
     {
-        /* $faker = Faker::create();
+        $faker = Faker::create();
 
-        // Create 50 sample customers
-        for ($i = 0; $i < 50; $i++) {
+        for ($i = 0; $i < 10; $i++) {
             Customer::create([
-                'first_name' => $faker->firstName(),
-                'last_name' => $faker->lastName(),
-                'email' => $faker->unique()->safeEmail(),
-                'phone' => $faker->unique()->numerify('09#########'), // Philippine mobile format
-                'address' => $faker->streetAddress(),
-                'city' => $faker->city(),
-                'state' => $faker->state(),
+                'first_name' => $faker->firstName,
+                'last_name' => $faker->lastName,
+                'email' => $faker->unique()->safeEmail,
+                'phone' => $faker->numerify('09#########'),
+                'address' => $faker->address,
+                'city' => $faker->city,
+                'state' => $faker->state,
             ]);
-        } */
+        }
     }
 }

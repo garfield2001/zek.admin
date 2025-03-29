@@ -3,454 +3,411 @@
 namespace Database\Seeders;
 
 use App\Models\Menu;
-use App\Models\MenuType;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Carbon;
 
 class MenuSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
     public function run(): void
     {
-        // Get menu types
-        $beefType = MenuType::where('name', 'Beef')->first();
-        $porkType = MenuType::where('name', 'Pork')->first();
-        $chickenType = MenuType::where('name', 'Chicken')->first();
-        $fishAndSeafoodType = MenuType::where('name', 'Fish & Seafoods')->first();
-        $vegetableType = MenuType::where('name', 'Vegetables')->first();
-        $pastaType = MenuType::where('name', 'Pasta')->first();
-        $noodlesType = MenuType::where('name', 'Noodles')->first();
-        $dessertType = MenuType::where('name', 'Dessert')->first();
+        $menus = [
+            // Drinks (menu_type_id: 1)
+            [
+                'menu_type_id' => 1,
+                'name' => 'Iced Tea',
+                'description' => 'Classic refreshing iced tea',
+                'price' => 60,
+                'status' => 'active'
+            ],
+            [
+                'menu_type_id' => 1,
+                'name' => 'Lemonade',
+                'description' => 'Fresh homemade lemonade',
+                'price' => 70,
+                'status' => 'active'
+            ],
+            [
+                'menu_type_id' => 1,
+                'name' => 'Four Seasons Juice',
+                'description' => 'Mixed tropical fruit juice blend',
+                'price' => 80,
+                'status' => 'active'
+            ],
+            [
+                'menu_type_id' => 1,
+                'name' => 'Sago\'t Gulaman',
+                'description' => 'Filipino brown sugar drink with tapioca pearls and gelatin',
+                'price' => 70,
+                'status' => 'active'
+            ],
+            [
+                'menu_type_id' => 1,
+                'name' => 'Buko Juice',
+                'description' => 'Fresh young coconut juice',
+                'price' => 75,
+                'status' => 'active'
+            ],
+            [
+                'menu_type_id' => 1,
+                'name' => 'Pineapple Juice',
+                'description' => 'Fresh pineapple juice',
+                'price' => 70,
+                'status' => 'active'
+            ],
+            [
+                'menu_type_id' => 1,
+                'name' => 'Calamansi Juice',
+                'description' => 'Filipino citrus juice',
+                'price' => 65,
+                'status' => 'active'
+            ],
+            [
+                'menu_type_id' => 1,
+                'name' => 'Soft Drinks',
+                'description' => 'Assorted carbonated beverages',
+                'price' => 55,
+                'status' => 'active'
+            ],
+            // Beef Dishes (menu_type_id: 2)
+            [
+                'menu_type_id' => 2,
+                'name' => 'Beef Steak Tagalog',
+                'description' => 'Filipino-style beef steak with onions',
+                'price' => 250,
+                'status' => 'active'
+            ],
+            [
+                'menu_type_id' => 2,
+                'name' => 'Beef Menudo',
+                'description' => 'Filipino-style beef stew with vegetables',
+                'price' => 220,
+                'status' => 'active'
+            ],
+            [
+                'menu_type_id' => 2,
+                'name' => 'Beef with Broccoli',
+                'description' => 'Stir-fried beef with broccoli',
+                'price' => 230,
+                'status' => 'active'
+            ],
+            [
+                'menu_type_id' => 2,
+                'name' => 'Beef Caldereta',
+                'description' => 'Filipino-style beef stew in tomato sauce',
+                'price' => 250,
+                'status' => 'active'
+            ],
+            [
+                'menu_type_id' => 2,
+                'name' => 'Sizzling Beef Bulalo in Cream Sauce',
+                'description' => 'Tender beef shanks in creamy sauce',
+                'price' => 280,
+                'status' => 'active'
+            ],
+            [
+                'menu_type_id' => 2,
+                'name' => 'Beef with Mushroom',
+                'description' => 'Stir-fried beef with mushrooms',
+                'price' => 240,
+                'status' => 'active'
+            ],
+            [
+                'menu_type_id' => 2,
+                'name' => 'Lengua Estofado',
+                'description' => 'Braised ox tongue in rich sauce',
+                'price' => 280,
+                'status' => 'active'
+            ],
 
-        if (
-            !$beefType || !$porkType || !$chickenType || !$fishAndSeafoodType ||
-            !$vegetableType || !$pastaType || !$noodlesType || !$dessertType
-        ) {
-            throw new \Exception('Required menu types not found. Please run MenuTypeSeeder first.');
-        }
+            // Pork Dishes (menu_type_id: 3)
+            [
+                'menu_type_id' => 3,
+                'name' => 'Pork Menudo',
+                'description' => 'Filipino-style pork stew with vegetables',
+                'price' => 200,
+                'status' => 'active'
+            ],
+            [
+                'menu_type_id' => 3,
+                'name' => 'Spicy Pork Ribs',
+                'description' => 'Tender pork ribs in spicy sauce',
+                'price' => 250,
+                'status' => 'active'
+            ],
+            [
+                'menu_type_id' => 3,
+                'name' => 'Pork Binagoongan',
+                'description' => 'Pork with shrimp paste',
+                'price' => 220,
+                'status' => 'active'
+            ],
+            [
+                'menu_type_id' => 3,
+                'name' => 'Sweet and Sour Pork',
+                'description' => 'Crispy pork in sweet and sour sauce',
+                'price' => 220,
+                'status' => 'active'
+            ],
+            [
+                'menu_type_id' => 3,
+                'name' => 'Lumpia Shanghai',
+                'description' => 'Filipino-style spring rolls',
+                'price' => 180,
+                'status' => 'active'
+            ],
+            [
+                'menu_type_id' => 3,
+                'name' => 'Pork Steak',
+                'description' => 'Filipino-style pork steak',
+                'price' => 230,
+                'status' => 'active'
+            ],
 
-        $now = Carbon::now();
-
-        // Beef Menus
-        $beefMenus = [
+            // Chicken Dishes (menu_type_id: 4)
             [
-                'name' => 'BEEF STEAK TAGALOG',
-                'description' => 'Filipino-style beef steak with onions in soy-calamansi sauce',
-                'price' => 270.00,
-                'image_url' => 'https://example.com/images/beef-steak-tagalog.jpg',
-                'created_at' => $now,
-                'updated_at' => $now,
+                'menu_type_id' => 4,
+                'name' => 'Chicken Afritada',
+                'description' => 'Chicken stewed in tomato sauce',
+                'price' => 200,
+                'status' => 'active'
             ],
             [
-                'name' => 'BEEF MENUDO',
-                'description' => 'Diced beef with liver and vegetables in tomato sauce',
-                'price' => 250.00,
-                'image_url' => 'https://example.com/images/beef-menudo.jpg',
-                'created_at' => $now,
-                'updated_at' => $now,
+                'menu_type_id' => 4,
+                'name' => 'Buttered Chicken',
+                'description' => 'Chicken in butter sauce',
+                'price' => 220,
+                'status' => 'active'
             ],
             [
-                'name' => 'BEEF WITH BROCCOLI',
-                'description' => 'Stir-fried beef slices with fresh broccoli in oyster sauce',
-                'price' => 260.00,
-                'image_url' => 'https://example.com/images/beef-broccoli.jpg',
-                'created_at' => $now,
-                'updated_at' => $now,
+                'menu_type_id' => 4,
+                'name' => 'Garlic Chicken',
+                'description' => 'Chicken with roasted garlic',
+                'price' => 200,
+                'status' => 'active'
             ],
             [
-                'name' => 'BEEF CALDERETA',
-                'description' => 'Rich and spicy beef stew with potatoes and bell peppers',
-                'price' => 280.00,
-                'image_url' => 'https://example.com/images/beef-caldereta.jpg',
-                'created_at' => $now,
-                'updated_at' => $now,
-            ],
-            [
-                'name' => 'SIZZLING BEEF BULALO IN CREAM SAUCE',
-                'description' => 'Tender beef shanks in creamy mushroom sauce',
-                'price' => 300.00,
-                'image_url' => 'https://example.com/images/sizzling-bulalo.jpg',
-                'created_at' => $now,
-                'updated_at' => $now,
-            ],
-            [
-                'name' => 'BEEF WITH MUSHROOM',
-                'description' => 'Tender beef slices with assorted mushrooms',
-                'price' => 270.00,
-                'image_url' => 'https://example.com/images/beef-mushroom.jpg',
-                'created_at' => $now,
-                'updated_at' => $now,
-            ],
-            [
-                'name' => 'LENGUA ESTOFADO',
-                'description' => 'Braised ox tongue in rich tomato sauce',
-                'price' => 290.00,
-                'image_url' => 'https://example.com/images/lengua-estofado.jpg',
-                'created_at' => $now,
-                'updated_at' => $now,
-            ],
-        ];
-
-        // Pork Menus
-        $porkMenus = [
-            [
-                'name' => 'PORK MENUDO',
-                'description' => 'Diced pork with liver and vegetables in tomato sauce',
-                'price' => 240.00,
-                'image_url' => 'https://example.com/images/pork-menudo.jpg',
-                'created_at' => $now,
-                'updated_at' => $now,
-            ],
-            [
-                'name' => 'SPICY PORK RIBS',
-                'description' => 'Tender pork ribs in spicy barbecue sauce',
-                'price' => 260.00,
-                'image_url' => 'https://example.com/images/spicy-pork-ribs.jpg',
-                'created_at' => $now,
-                'updated_at' => $now,
-            ],
-            [
-                'name' => 'PORK BINAGOONGAN',
-                'description' => 'Crispy pork belly with shrimp paste',
-                'price' => 250.00,
-                'image_url' => 'https://example.com/images/binagoongan.jpg',
-                'created_at' => $now,
-                'updated_at' => $now,
-            ],
-            [
-                'name' => 'SWEET AND SOUR PORK',
-                'description' => 'Crispy pork in sweet and sour sauce with pineapple',
-                'price' => 240.00,
-                'image_url' => 'https://example.com/images/sweet-sour-pork.jpg',
-                'created_at' => $now,
-                'updated_at' => $now,
-            ],
-            [
-                'name' => 'LUMPIA SHANGHAI',
-                'description' => 'Crispy spring rolls with pork and vegetables',
-                'price' => 200.00,
-                'image_url' => 'https://example.com/images/lumpia-shanghai.jpg',
-                'created_at' => $now,
-                'updated_at' => $now,
-            ],
-            [
-                'name' => 'PORK STEAK',
-                'description' => 'Grilled pork chops in mushroom gravy',
-                'price' => 250.00,
-                'image_url' => 'https://example.com/images/pork-steak.jpg',
-                'created_at' => $now,
-                'updated_at' => $now,
-            ],
-        ];
-
-        // Chicken Menus
-        $chickenMenus = [
-            [
-                'name' => 'CHICKEN AFRITADA',
-                'description' => 'Chicken stewed in tomato sauce with vegetables',
-                'price' => 230.00,
-                'image_url' => 'https://example.com/images/chicken-afritada.jpg',
-                'created_at' => $now,
-                'updated_at' => $now,
-            ],
-            [
-                'name' => 'BUTTERED CHICKEN',
-                'description' => 'Chicken pieces in rich butter garlic sauce',
-                'price' => 240.00,
-                'image_url' => 'https://example.com/images/buttered-chicken.jpg',
-                'created_at' => $now,
-                'updated_at' => $now,
-            ],
-            [
-                'name' => 'GARLIC CHICKEN',
-                'description' => 'Crispy chicken with roasted garlic',
-                'price' => 230.00,
-                'image_url' => 'https://example.com/images/garlic-chicken.jpg',
-                'created_at' => $now,
-                'updated_at' => $now,
-            ],
-            [
-                'name' => 'FRIED CHICKEN',
+                'menu_type_id' => 4,
+                'name' => 'Fried Chicken',
                 'description' => 'Classic crispy fried chicken',
-                'price' => 220.00,
-                'image_url' => 'https://example.com/images/fried-chicken.jpg',
-                'created_at' => $now,
-                'updated_at' => $now,
+                'price' => 190,
+                'status' => 'active'
             ],
             [
-                'name' => 'CHICKEN CURRY',
-                'description' => 'Chicken in coconut curry sauce with vegetables',
-                'price' => 250.00,
-                'image_url' => 'https://example.com/images/chicken-curry.jpg',
-                'created_at' => $now,
-                'updated_at' => $now,
+                'menu_type_id' => 4,
+                'name' => 'Chicken Curry',
+                'description' => 'Filipino-style chicken curry',
+                'price' => 220,
+                'status' => 'active'
             ],
             [
-                'name' => 'CHICKEN TERIYAKI',
-                'description' => 'Grilled chicken in sweet teriyaki sauce',
-                'price' => 240.00,
-                'image_url' => 'https://example.com/images/chicken-teriyaki.jpg',
-                'created_at' => $now,
-                'updated_at' => $now,
+                'menu_type_id' => 4,
+                'name' => 'Chicken Teriyaki',
+                'description' => 'Japanese-style chicken in teriyaki sauce',
+                'price' => 230,
+                'status' => 'active'
             ],
             [
-                'name' => 'CHICKEN BUFFALO',
-                'description' => 'Crispy chicken in spicy buffalo sauce',
-                'price' => 250.00,
-                'image_url' => 'https://example.com/images/buffalo-wings.jpg',
-                'created_at' => $now,
-                'updated_at' => $now,
+                'menu_type_id' => 4,
+                'name' => 'Chicken Buffalo Wings',
+                'description' => 'Spicy buffalo-style chicken wings',
+                'price' => 240,
+                'status' => 'active'
             ],
             [
-                'name' => 'CHICKEN CORDON BLEU',
+                'menu_type_id' => 4,
+                'name' => 'Chicken Cordon Bleu',
                 'description' => 'Breaded chicken stuffed with ham and cheese',
-                'price' => 270.00,
-                'image_url' => 'https://example.com/images/cordon-bleu.jpg',
-                'created_at' => $now,
-                'updated_at' => $now,
+                'price' => 260,
+                'status' => 'active'
             ],
             [
-                'name' => 'CHICKEN ALA KING',
-                'description' => 'Creamy chicken with bell peppers and mushrooms',
-                'price' => 260.00,
-                'image_url' => 'https://example.com/images/chicken-ala-king.jpg',
-                'created_at' => $now,
-                'updated_at' => $now,
+                'menu_type_id' => 4,
+                'name' => 'Chicken Ala King',
+                'description' => 'Creamy chicken with vegetables',
+                'price' => 240,
+                'status' => 'active'
             ],
-        ];
 
-        // Fish & Seafoods Menus
-        $fishAndSeafoodMenus = [
+            // Fish & Seafoods (menu_type_id: 5)
             [
-                'name' => 'MIXED SEAFOODS',
-                'description' => 'Assorted seafood in garlic butter sauce',
-                'price' => 280.00,
-                'image_url' => 'https://example.com/images/mixed-seafood.jpg',
-                'created_at' => $now,
-                'updated_at' => $now,
+                'menu_type_id' => 5,
+                'name' => 'Mixed Seafoods',
+                'description' => 'Assorted seafood dish',
+                'price' => 300,
+                'status' => 'active'
             ],
             [
-                'name' => 'BUTTERED GARLIC SHRIMP',
-                'description' => 'Shrimp sautéed in butter and garlic',
-                'price' => 290.00,
-                'image_url' => 'https://example.com/images/garlic-shrimp.jpg',
-                'created_at' => $now,
-                'updated_at' => $now,
+                'menu_type_id' => 5,
+                'name' => 'Buttered Garlic Shrimp',
+                'description' => 'Shrimp in butter garlic sauce',
+                'price' => 280,
+                'status' => 'active'
             ],
             [
-                'name' => 'SWEET AND SOUR FISH',
-                'description' => 'Fried fish fillet in sweet and sour sauce',
-                'price' => 260.00,
-                'image_url' => 'https://example.com/images/sweet-sour-fish.jpg',
-                'created_at' => $now,
-                'updated_at' => $now,
+                'menu_type_id' => 5,
+                'name' => 'Sweet and Sour Fish',
+                'description' => 'Fish fillet in sweet and sour sauce',
+                'price' => 250,
+                'status' => 'active'
             ],
             [
-                'name' => 'FISH FILLET WITH TAOSI SAUCE',
+                'menu_type_id' => 5,
+                'name' => 'Fish Fillet with Taosi Sauce',
                 'description' => 'Fish fillet in black bean sauce',
-                'price' => 270.00,
-                'image_url' => 'https://example.com/images/fish-taosi.jpg',
-                'created_at' => $now,
-                'updated_at' => $now,
+                'price' => 260,
+                'status' => 'active'
             ],
             [
-                'name' => 'BREADED FISH FILLET WITH TARTAR SAUCE',
-                'description' => 'Crispy breaded fish with homemade tartar sauce',
-                'price' => 250.00,
-                'image_url' => 'https://example.com/images/breaded-fish.jpg',
-                'created_at' => $now,
-                'updated_at' => $now,
+                'menu_type_id' => 5,
+                'name' => 'Breaded Fish Fillet with Tartar Sauce',
+                'description' => 'Crispy fish fillet with tartar sauce',
+                'price' => 250,
+                'status' => 'active'
             ],
+
+            // Vegetables (menu_type_id: 6)
+            [
+                'menu_type_id' => 6,
+                'name' => 'Chopsuey with Quail Egg',
+                'description' => 'Mixed vegetables with quail eggs',
+                'price' => 180,
+                'status' => 'active'
+            ],
+            [
+                'menu_type_id' => 6,
+                'name' => 'Vegetable with Seafoods',
+                'description' => 'Mixed vegetables with seafood',
+                'price' => 220,
+                'status' => 'active'
+            ],
+            [
+                'menu_type_id' => 6,
+                'name' => 'Buttered Mix Vegetables',
+                'description' => 'Mixed vegetables in butter sauce',
+                'price' => 160,
+                'status' => 'active'
+            ],
+            [
+                'menu_type_id' => 6,
+                'name' => 'Pinakbet',
+                'description' => 'Filipino mixed vegetable dish',
+                'price' => 180,
+                'status' => 'active'
+            ],
+            [
+                'menu_type_id' => 6,
+                'name' => 'Stir Fry Vegetable',
+                'description' => 'Asian-style stir-fried vegetables',
+                'price' => 160,
+                'status' => 'active'
+            ],
+
+            // Pasta (menu_type_id: 7)
+            [
+                'menu_type_id' => 7,
+                'name' => 'Spaghetti with Bechamel Sauce',
+                'description' => 'Spaghetti in creamy white sauce',
+                'price' => 220,
+                'status' => 'active'
+            ],
+            [
+                'menu_type_id' => 7,
+                'name' => 'Seafood Marinara',
+                'description' => 'Pasta with mixed seafood in tomato sauce',
+                'price' => 260,
+                'status' => 'active'
+            ],
+            [
+                'menu_type_id' => 7,
+                'name' => 'Creamy Carbonara',
+                'description' => 'Classic creamy carbonara pasta',
+                'price' => 240,
+                'status' => 'active'
+            ],
+            [
+                'menu_type_id' => 7,
+                'name' => 'Baked Macaroni',
+                'description' => 'Baked macaroni in meat sauce',
+                'price' => 220,
+                'status' => 'active'
+            ],
+            [
+                'menu_type_id' => 7,
+                'name' => 'Baked Lasagna',
+                'description' => 'Classic baked lasagna',
+                'price' => 260,
+                'status' => 'active'
+            ],
+            [
+                'menu_type_id' => 7,
+                'name' => 'Baked Spaghetti',
+                'description' => 'Baked spaghetti in meat sauce',
+                'price' => 240,
+                'status' => 'active'
+            ],
+
+            // Noodles (menu_type_id: 8)
+            [
+                'menu_type_id' => 8,
+                'name' => 'Sotanghon Guisado',
+                'description' => 'Stir-fried glass noodles',
+                'price' => 200,
+                'status' => 'active'
+            ],
+            [
+                'menu_type_id' => 8,
+                'name' => 'Pancit Canton',
+                'description' => 'Filipino-style canton noodles',
+                'price' => 200,
+                'status' => 'active'
+            ],
+            [
+                'menu_type_id' => 8,
+                'name' => 'Bam-E',
+                'description' => 'Cebuano-style mixed noodles',
+                'price' => 220,
+                'status' => 'active'
+            ],
+
+            // Dessert (menu_type_id: 9)
+            [
+                'menu_type_id' => 9,
+                'name' => 'Fresh Mix Fruits',
+                'description' => 'Assorted fresh fruit platter',
+                'price' => 150,
+                'status' => 'active'
+            ],
+            [
+                'menu_type_id' => 9,
+                'name' => 'Mango Sago',
+                'description' => 'Mango cream with sago pearls',
+                'price' => 120,
+                'status' => 'active'
+            ],
+            [
+                'menu_type_id' => 9,
+                'name' => 'Buko Salad',
+                'description' => 'Young coconut fruit salad',
+                'price' => 130,
+                'status' => 'active'
+            ],
+            [
+                'menu_type_id' => 9,
+                'name' => 'Buko Pandan',
+                'description' => 'Coconut pandan cream dessert',
+                'price' => 130,
+                'status' => 'active'
+            ],
+            [
+                'menu_type_id' => 9,
+                'name' => 'Macaroni Salad',
+                'description' => 'Sweet macaroni dessert salad',
+                'price' => 140,
+                'status' => 'active'
+            ]
         ];
 
-        // Vegetables Menus
-        $vegetableMenus = [
-            [
-                'name' => 'CHOPSUEY WITH QUAIL EGG',
-                'description' => 'Mixed vegetables with quail eggs in oyster sauce',
-                'price' => 220.00,
-                'image_url' => 'https://example.com/images/chopsuey.jpg',
-                'created_at' => $now,
-                'updated_at' => $now,
-            ],
-            [
-                'name' => 'VEGETABLE WITH SEAFOODS',
-                'description' => 'Mixed vegetables with assorted seafood',
-                'price' => 250.00,
-                'image_url' => 'https://example.com/images/vegetable-seafood.jpg',
-                'created_at' => $now,
-                'updated_at' => $now,
-            ],
-            [
-                'name' => 'BUTTERED MIX VEGETABLES',
-                'description' => 'Assorted vegetables in butter sauce',
-                'price' => 200.00,
-                'image_url' => 'https://example.com/images/buttered-vegetables.jpg',
-                'created_at' => $now,
-                'updated_at' => $now,
-            ],
-            [
-                'name' => 'PINAKBET',
-                'description' => 'Mixed vegetables with shrimp paste',
-                'price' => 210.00,
-                'image_url' => 'https://example.com/images/pinakbet.jpg',
-                'created_at' => $now,
-                'updated_at' => $now,
-            ],
-            [
-                'name' => 'STIR FRY VEGETABLE',
-                'description' => 'Fresh vegetables in light garlic sauce',
-                'price' => 190.00,
-                'image_url' => 'https://example.com/images/stir-fry-veg.jpg',
-                'created_at' => $now,
-                'updated_at' => $now,
-            ],
-        ];
-
-        // Pasta Menus
-        $pastaMenus = [
-            [
-                'name' => 'SPAGHETTI WITH BECHAMEL SAUCE',
-                'description' => 'Creamy white sauce pasta with mushrooms',
-                'price' => 230.00,
-                'image_url' => 'https://example.com/images/bechamel-pasta.jpg',
-                'created_at' => $now,
-                'updated_at' => $now,
-            ],
-            [
-                'name' => 'SEAFOOD MARINARA',
-                'description' => 'Mixed seafood in rich tomato sauce',
-                'price' => 260.00,
-                'image_url' => 'https://example.com/images/seafood-marinara.jpg',
-                'created_at' => $now,
-                'updated_at' => $now,
-            ],
-            [
-                'name' => 'CREAMY CARBONARA',
-                'description' => 'Classic carbonara with bacon and parmesan',
-                'price' => 240.00,
-                'image_url' => 'https://example.com/images/carbonara.jpg',
-                'created_at' => $now,
-                'updated_at' => $now,
-            ],
-            [
-                'name' => 'BAKED MACARONI',
-                'description' => 'Baked pasta in meat sauce and cheese',
-                'price' => 220.00,
-                'image_url' => 'https://example.com/images/baked-macaroni.jpg',
-                'created_at' => $now,
-                'updated_at' => $now,
-            ],
-            [
-                'name' => 'BAKED LASAGNA',
-                'description' => 'Layered pasta with meat sauce and cheese',
-                'price' => 250.00,
-                'image_url' => 'https://example.com/images/lasagna.jpg',
-                'created_at' => $now,
-                'updated_at' => $now,
-            ],
-            [
-                'name' => 'BAKED SPAGHETTI',
-                'description' => 'Baked spaghetti in meat sauce and cheese',
-                'price' => 230.00,
-                'image_url' => 'https://example.com/images/baked-spaghetti.jpg',
-                'created_at' => $now,
-                'updated_at' => $now,
-            ],
-        ];
-
-        // Noodles Menus
-        $noodlesMenus = [
-            [
-                'name' => 'SOTANGHON GUISADO',
-                'description' => 'Stir-fried glass noodles with vegetables',
-                'price' => 200.00,
-                'image_url' => 'https://example.com/images/sotanghon.jpg',
-                'created_at' => $now,
-                'updated_at' => $now,
-            ],
-            [
-                'name' => 'PANCIT CANTON',
-                'description' => 'Stir-fried egg noodles with meat and vegetables',
-                'price' => 210.00,
-                'image_url' => 'https://example.com/images/pancit-canton.jpg',
-                'created_at' => $now,
-                'updated_at' => $now,
-            ],
-            [
-                'name' => 'BAM-E',
-                'description' => 'Mixed noodles with seafood and vegetables',
-                'price' => 220.00,
-                'image_url' => 'https://example.com/images/bam-e.jpg',
-                'created_at' => $now,
-                'updated_at' => $now,
-            ],
-        ];
-
-        // Dessert Menus
-        $dessertMenus = [
-            [
-                'name' => 'FRESH MIX FRUITS',
-                'description' => 'Assorted seasonal fresh fruits',
-                'price' => 150.00,
-                'image_url' => 'https://example.com/images/fresh-fruits.jpg',
-                'created_at' => $now,
-                'updated_at' => $now,
-            ],
-            [
-                'name' => 'MANGO SAGO',
-                'description' => 'Fresh mango with sago pearls and cream',
-                'price' => 160.00,
-                'image_url' => 'https://example.com/images/mango-sago.jpg',
-                'created_at' => $now,
-                'updated_at' => $now,
-            ],
-            [
-                'name' => 'BUKO SALAD',
-                'description' => 'Young coconut strips with mixed fruits',
-                'price' => 170.00,
-                'image_url' => 'https://example.com/images/buko-salad.jpg',
-                'created_at' => $now,
-                'updated_at' => $now,
-            ],
-            [
-                'name' => 'BUKO PANDAN',
-                'description' => 'Young coconut with pandan flavored cream',
-                'price' => 160.00,
-                'image_url' => 'https://example.com/images/buko-pandan.jpg',
-                'created_at' => $now,
-                'updated_at' => $now,
-            ],
-            [
-                'name' => 'MACARONI SALAD',
-                'description' => 'Sweet macaroni salad with fruits',
-                'price' => 150.00,
-                'image_url' => 'https://example.com/images/macaroni-salad.jpg',
-                'created_at' => $now,
-                'updated_at' => $now,
-            ],
-        ];
-
-        // Create Menus for each type
-        $menuTypes = [
-            [$beefType->id, $beefMenus],
-            [$porkType->id, $porkMenus],
-            [$chickenType->id, $chickenMenus],
-            [$fishAndSeafoodType->id, $fishAndSeafoodMenus],
-            [$vegetableType->id, $vegetableMenus],
-            [$pastaType->id, $pastaMenus],
-            [$noodlesType->id, $noodlesMenus],
-            [$dessertType->id, $dessertMenus],
-        ];
-
-        foreach ($menuTypes as [$typeId, $menus]) {
-            foreach ($menus as $menu) {
-                $menu['menu_type_id'] = $typeId;
-                $menu['is_available'] = true;
-                Menu::create($menu);
-            }
+        foreach ($menus as $menu) {
+            Menu::create($menu);
         }
     }
 }

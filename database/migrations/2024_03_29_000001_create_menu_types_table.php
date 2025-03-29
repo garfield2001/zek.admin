@@ -6,23 +6,16 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
         Schema::create('menu_types', function (Blueprint $table) {
             $table->id();
-            $table->string('name')->unique()->comment('e.g., Beef, Pork, Chicken');
+            $table->string('name');
             $table->string('description')->nullable();
             $table->timestamps();
-            $table->softDeletes();
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::dropIfExists('menu_types');

@@ -2,7 +2,6 @@
 
 namespace Database\Seeders;
 
-use App\Models\AddonCategory;
 use App\Models\AddonPackage;
 use Illuminate\Database\Seeder;
 
@@ -10,69 +9,43 @@ class AddonPackageSeeder extends Seeder
 {
     public function run(): void
     {
-        // Get categories
-        $bellychonCategory = AddonCategory::where('name', 'Bellychon Package')->first();
-        $foodTrayCategory = AddonCategory::where('name', 'Food Tray Menu')->first();
-
-        // Bellychon Packages
-        $bellychonPackages = [
+        $packages = [
             [
-                'category_id' => $bellychonCategory->id,
+                'category_id' => 1, // Lechon category
                 'name' => 'Package A',
-                'description' => 'Lechon Belly 3kgs with sides',
+                'description' => 'Premium lechon belly package for 15 pax. Includes 1 whole lechon belly, 3 side dishes of your choice, special lechon sauce, and steamed rice. Perfect for intimate gatherings.',
+                'meal_limit' => 4,
                 'serving_size' => 15,
                 'price' => 4000,
                 'status' => 'active'
             ],
             [
-                'category_id' => $bellychonCategory->id,
+                'category_id' => 1, // Lechon category
                 'name' => 'Package B',
-                'description' => 'Lechon Belly 3kgs with additional sides',
+                'description' => 'Deluxe lechon belly package for 15 pax. Includes 1 whole lechon belly, 4 side dishes of your choice, special lechon sauce, steamed rice, and dessert. Ideal for family celebrations.',
+                'meal_limit' => 5,
                 'serving_size' => 15,
                 'price' => 5000,
                 'status' => 'active'
             ],
             [
-                'category_id' => $bellychonCategory->id,
+                'category_id' => 1, // Lechon category
                 'name' => 'Package C',
-                'description' => 'Lechon Belly 5kgs with sides',
-                'serving_size' => 25,
+                'description' => 'Premium plus lechon belly package for 15 pax. Includes 1 whole lechon belly, 4 side dishes of your choice, special lechon sauce, pancit canton, steamed rice, and 2 desserts. Perfect for special occasions.',
+                'meal_limit' => 5,
+                'serving_size' => 15,
                 'price' => 6500,
                 'status' => 'active'
-            ]
+            ],
+            STUCKED BETWEEN ADJUSTING ADD-ONS SIDE 
+            BECAUSE OF THE COMPLEXITY ADD ON PACKAGES
+
+
+
+            // Add more addon packages...
         ];
 
-        // Food Tray Packages (acting as menu types)
-        $foodTrayPackages = [
-            [
-                'category_id' => $foodTrayCategory->id,
-                'name' => 'Beef Trays',
-                'description' => 'Selection of beef dishes',
-                'serving_size' => 15,
-                'status' => 'active'
-            ],
-            [
-                'category_id' => $foodTrayCategory->id,
-                'name' => 'Seafoods Trays',
-                'description' => 'Selection of seafood dishes',
-                'serving_size' => 15,
-                'status' => 'active'
-            ],
-            [
-                'category_id' => $foodTrayCategory->id,
-                'name' => 'Pasta Trays',
-                'description' => 'Selection of pasta dishes',
-                'serving_size' => 15,
-                'status' => 'active'
-            ]
-        ];
-
-        // Create all packages
-        foreach ($bellychonPackages as $package) {
-            AddonPackage::create($package);
-        }
-
-        foreach ($foodTrayPackages as $package) {
+        foreach ($packages as $package) {
             AddonPackage::create($package);
         }
     }

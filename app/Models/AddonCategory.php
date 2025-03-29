@@ -7,19 +7,9 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class AddonCategory extends Model
 {
-    protected $fillable = [
-        'name',
-        'description',
-        'status'
-    ];
+    protected $fillable = ['name', 'description', 'status'];
 
-    protected $casts = [
-        'created_at' => 'datetime',
-        'updated_at' => 'datetime'
-    ];
-
-    // Relationships
-    public function packages(): HasMany
+    public function addonPackages(): HasMany
     {
         return $this->hasMany(AddonPackage::class, 'category_id');
     }

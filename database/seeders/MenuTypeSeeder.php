@@ -7,44 +7,45 @@ use Illuminate\Database\Seeder;
 
 class MenuTypeSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
     public function run(): void
     {
         $menuTypes = [
             [
+                'name' => 'Drinks',
+                'description' => 'Beverages and refreshments'
+            ],
+            [
                 'name' => 'Beef',
-                'description' => 'Premium beef dishes expertly prepared with rich flavors and tender textures',
+                'description' => 'Beef dishes'
             ],
             [
                 'name' => 'Pork',
-                'description' => 'Succulent pork dishes crafted with traditional and modern cooking techniques',
+                'description' => 'Pork dishes'
             ],
             [
                 'name' => 'Chicken',
-                'description' => 'Versatile chicken dishes ranging from classic favorites to gourmet preparations',
+                'description' => 'Chicken dishes'
             ],
             [
                 'name' => 'Fish & Seafoods',
-                'description' => 'Fresh seafood selections featuring fish, shrimp, and other marine delicacies',
+                'description' => 'Seafood dishes'
             ],
             [
                 'name' => 'Vegetables',
-                'description' => 'Nutritious vegetable dishes prepared to maintain freshness and natural flavors',
+                'description' => 'Vegetable dishes'
             ],
             [
                 'name' => 'Pasta',
-                'description' => 'Italian-inspired pasta dishes with rich sauces and premium ingredients',
+                'description' => 'Pasta dishes'
             ],
             [
                 'name' => 'Noodles',
-                'description' => 'Asian-style noodle dishes featuring various cooking styles and flavors',
+                'description' => 'Asian noodle dishes'
             ],
             [
                 'name' => 'Dessert',
-                'description' => 'Sweet endings to your meal with traditional Filipino and international desserts',
-            ],
+                'description' => 'Sweet treats and desserts'
+            ]
         ];
 
         foreach ($menuTypes as $menuType) {

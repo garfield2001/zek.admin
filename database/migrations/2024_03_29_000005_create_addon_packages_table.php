@@ -13,8 +13,9 @@ return new class extends Migration
             $table->foreignId('category_id')->constrained('addon_categories')->onDelete('cascade');
             $table->string('name');
             $table->text('description')->nullable();
+            $table->integer('meal_limit');
             $table->integer('serving_size');
-            $table->decimal('price', 10, 2)->nullable();
+            $table->decimal('price', 10, 2);
             $table->string('status')->default('active');
             $table->timestamps();
         });
