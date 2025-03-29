@@ -21,6 +21,7 @@ class DatabaseSeeder extends Seeder
             AddonCategorySeeder::class,
             AddonPackageSeeder::class,
             AddonPackageMenuSeeder::class,
+            CustomerSeeder::class,
         ]);
     }
 }

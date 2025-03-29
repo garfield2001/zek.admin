@@ -61,7 +61,7 @@ const mainNavItems: NavItem[] = [
     },
     {
         title: 'Customer Reservation',
-        href: '/customer-reservation',
+        href: '/customer/reservation',
         icon: LayoutGrid,
     },
 

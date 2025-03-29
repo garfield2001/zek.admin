@@ -18,17 +18,58 @@ class PackageSeeder extends Seeder
     {
         $now = Carbon::now();
 
-
         $packages = [
             [
-                'name' => 'Package A',
+                'name' => 'Basic Package',
                 'price' => 280,
-                'meal_limit' => 5,
-                'minimum_guests' => 50,
-                'maximum_guests' => 100,
-                'status' => 'active',
-                'created_at' => $now,
-                'updated_at' => $now,
+                'min_guests' => 50,
+                'menu_limit' => 5,
+                'predefined_drinks' => true,
+                'icon' => '🍽️',
+                'description' => 'Perfect for medium-sized gatherings',
+                'features' => [
+                    [
+                        'feature' => 'Minimum 50 guests',
+                    ],
+                    [
+                        'feature' => '5 menu selections (4 customizable + 1 predefined drink)',
+                    ],
+                    [
+                        'feature' => 'Predefined drinks selection',
+                    ],
+                    [
+                        'feature' => 'Basic setup and service',
+                    ],
+                    [
+                        'feature' => 'Standard tableware and linens',
+                    ]
+                ]
+            ],
+            [
+                'name' => 'Standard Package',
+                'price' => 350,
+                'min_guests' => 50,
+                'menu_limit' => 7,
+                'predefined_drinks' => true,
+                'icon' => '✨',
+                'description' => 'Ideal for medium to large events',
+                'features' => [
+                    [
+                        'feature' => 'Minimum 50 guests',
+                    ],
+                    [
+                        'feature' => '7 menu selections (6 customizable + 1 predefined drink)',
+                    ],
+                    [
+                        'feature' => 'Predefined drinks selection',
+                    ],
+                    [
+                        'feature' => 'Premium setup and service',
+                    ],
+                    [
+                        'feature' => 'Premium tableware and linens',
+                    ]
+                ]
             ],
             [
                 'name' => 'Package B',
@@ -62,9 +103,8 @@ class PackageSeeder extends Seeder
             ],
         ];
 
-
-        foreach ($packages as $packageData) {
-            Package::create($packageData);
-        };
+        foreach ($packages as $package) {
+            Package::create($package);
+        }
     }
 }

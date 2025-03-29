@@ -13,17 +13,28 @@ class Package extends Model
     protected $fillable = [
         'name',
         'price',
-        'meal_limit',
-        'minimum_guests',
-        'maximum_guests',
-        'status',
+        'min_guests',
+        'menu_limit',
+        'predefined_drinks',
+        'icon',
+        'description',
+        'features'
     ];
 
     protected $casts = [
-        'price' => 'decimal:2',
-        'meal_limit' => 'integer',
-        'minimum_guests' => 'integer',
-        'maximum_guests' => 'integer',
-        'status' => 'string',
+        'features' => 'array',
+        'predefined_drinks' => 'boolean',
+        'price' => 'decimal:2'
     ];
+
+    // Helper method to get formatted features
+    public function getFormattedFeatures()
+    {
+        return collect($this->features)->map(function ($feature) {
+            return [
+                'text' => $feature['feature'],
+                'icon' => $feature['icon'] ?? null
+            ];
+        });
+    }
 }

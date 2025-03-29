@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\CUSTOMER\ReservationController;
 use App\Http\Controllers\Pages\CateringController;
 use App\Http\Controllers\Pages\DashboardController;
 use App\Http\Controllers\Pages\ManageCateringController;
@@ -15,6 +16,13 @@ Route::get('/', fn() => Inertia::render('Welcome'))->name('home');
 Route::middleware(['auth', 'verified'])->group(function () {
     // Dashboard
     Route::get('dashboard', [DashboardController::class, 'index'])->name('show.dashboard.page');
+
+
+    // Customer Reservation Routes (CUSTOMER) TESTING CUSTOMER RESERVATION, 
+    // Testing if migrations from catering package to add-ons are working as expected
+    Route::prefix('customer')->group(function () {
+        Route::get('/reservation', [ReservationController::class, 'index'])->name('show.customer.reservation.page');
+    });
 
 
     // Reservations Routes
